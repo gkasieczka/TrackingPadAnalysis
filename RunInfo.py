@@ -74,7 +74,7 @@ class RunInfo:
     assert (type(diamond) is t.StringType or type(diamond) is t.UnicodeType), "Invalid diamond"    
     assert (data_type in RunInfo.data_types.keys()), "Invalid data_type"
     assert (type(bias_voltage) is t.IntType and -2000 < bias_voltage < 2000)
-    assert (type(mask_time) is t.IntType and 0 < mask_time and mask_time/100 < 23 and mask_time%100 < 59), "Invalid mask_time"
+    assert (type(mask_time) is t.IntType and 0 <= mask_time and mask_time/100 < 23 and mask_time%100 < 59), "Invalid mask_time"
     assert (type(fsh13) is t.IntType and -200 <= fsh13 <= -1), "Invalid fsh13"
     assert (type(fs11) is t.IntType and 0 < fs11 <= 200), "Invalid fs11"
     assert (type(rate_raw) is t.IntType), "Invalid rate_raw"
