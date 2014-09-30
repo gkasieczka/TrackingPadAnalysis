@@ -122,10 +122,3 @@ class RunInfo:
 
 # End of class RunInfo
 
-
-# Run a simple test when called from command line
-if __name__ == "__main__":
-
-  RunInfo(12, "2014-09-21", 1820, 1839, "S129", 0, 0, 1724, -50, 70, -1,  -1, 200, -1, -1, -1)
-  RunInfo(16, "2014-09-22",  845,  929, "S129", 0, -25, 1724, -2, 70, -1,  829, 193, 1905748, 416428, 490405)
-
