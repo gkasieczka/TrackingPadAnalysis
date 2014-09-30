@@ -75,7 +75,7 @@ class MaskInfo:
     MaskInfo.masks[name] = self
   # End of __init__
 
-  # Dump all MaskInfos (the content of the masks directory)
+  # Dump all MaskInfos (the content of the masks dictionary)
   #  to a file using json
   @classmethod
   def dump(cls, filename):
@@ -88,8 +88,29 @@ class MaskInfo:
     f.close()
   # End of to_JSON
 
+  
+  # Read all MaskInfos from a file and use to intialize objects
+  @classmethod
+  def load(cls, filename):
+    
+    # first get the dictionary from the file..
+    f = open(filename, "r")
+    data = json.load(f) 
+    f.close()
+
+    # ..then intialize the individual MaskInfo objects from it
+    for k,v in data.iteritems():
+      MaskInfo(**v)
+    
+  # End of to_JSON
+
+
 # End of class MaskInfo  
 
 
-test = MaskInfo(0, "S30", 2030, 0, 20, 0, 20, 0, 20, 0, 20)
-MaskInfo.dump("test.json")
+# Run a simple test when called from command line
+if __name__ == "__main__":
+  #test = MaskInfo(0, "S30", 2030, 0, 20, 0, 20, 0, 20, 0, 20)
+  #MaskInfo.dump("test.json")
+  MaskInfo.load("test.json")
+  print MaskInfo.masks
