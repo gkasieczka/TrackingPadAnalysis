@@ -56,7 +56,15 @@ while True:
         last_argument = getattr(last_run, argument_name)
         argument_type = type(last_argument)
 
-        print "\n\nPlease enter {0}: (default = {1}). (or type reset or exit)".format(argument_name, last_argument)
+        print "\nEnter {0}: (default = {1}). (or type reset or exit)".format(argument_name, last_argument)
+        if argument_name == "data_type":
+            for k in sorted(RunInfo.data_types.keys()):
+                print "{0}: {1}".format(k, RunInfo.data_types[k])
+
+        if argument_name == "pedestal_run":
+            print "run from which to take pedestal information"
+            print  "(set to -1 for pedestal runs or if no pedestal run is available)"
+
         response = raw_input()
 
         if response == "":
