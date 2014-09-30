@@ -55,6 +55,9 @@ class RunInfo:
                events_nops,             # [int] (total events, nops = no prescale)
                events_ps,               # [int] (total events, ps = prescale)
                events_trig,             # [int] (total events, used for triggering)               
+               pedestal_run,            # [int] run from which to take pedestal information
+                                        #         (set to -1 for pedestal runs or if no pedestal run is available)
+               
                pedestal = float('nan'), # [float] for data runs: which pedestal value to subtract
                comment = "",            # [string] free text
                # Next four parameters can be measured using TimingAlignment.py
@@ -80,6 +83,7 @@ class RunInfo:
     assert (type(events_nops) is t.IntType), "Invalid events_nops"
     assert (type(events_ps) is t.IntType), "Invalid events_ps"
     assert (type(events_trig) is t.IntType), "Invalid events_trig"
+    assert (type(pedestal_run) is t.IntType), "Invalid pedestal_run"
     assert (type(pedestal) is t.FloatType), "Invalid pedestal"
     assert (type(comment) is t.StringType or type(comment) is t.UnicodeType), "Invalid comment"
     assert (type(align_ev_pixel) is t.IntType), "Invalid align_ev_pixel"

@@ -46,7 +46,8 @@ while True:
                  "rate_trigger",           
                  "events_nops",            
                  "events_ps",              
-                 "events_trig"]            
+                 "events_trig",
+                 "pedestal_run"]            
 
     dic = {}
     
