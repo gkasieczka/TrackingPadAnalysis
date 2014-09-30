@@ -40,15 +40,16 @@ if action ==3:
   diamond = args.diamond
   bias_voltage = args.voltage
 
-print 'Run',args.run
-print 'action',args.action
-print 'diamond',args.diamond
-print 'voltag',args.voltage
+print 'Run', args.run
+print 'action', args.action
+print 'diamond', args.diamond
+print 'voltage', args.voltage
 
 
 ###############################
 # Init ROOT
 ###############################
+
 ROOT.gStyle.SetPalette(53)
 
 ROOT.gStyle.SetPadLeftMargin(0.15)
@@ -160,8 +161,8 @@ except:
 # Get Trees
 ###############################
 
-basedir_pad = "../../padreadout-devel/data/output/"
-basedir_pixel = "../plots/"
+basedir_pad = "../padreadout-devel/data/output/"
+basedir_pixel = "../DHidasPLT-devel/plots/"
 
 format_pad = "{0}run_2014_09r{1:06d}.root"
 format_pixel = "{0}{1:06d}/histos.root"
