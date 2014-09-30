@@ -142,5 +142,29 @@
         "rate_trigger": 219, 
         "time_drift": -1.9e-06, 
         "time_offset": 0.0
+    }, 
+    "63": {
+        "align_ev_pad": -1, 
+        "align_ev_pixel": -1, 
+        "begin_date": "2014-09-22", 
+        "begin_time": 1404, 
+        "bias_voltage": -500, 
+        "comment": "", 
+        "data_type": 0, 
+        "diamond": "S129", 
+        "end_time": -1, 
+        "events_nops": 518907, 
+        "events_ps": 290930, 
+        "events_trig": 260529, 
+        "fs11": 70, 
+        "fsh13": -1, 
+        "mask_time": 1724, 
+        "number": 63, 
+        "pedestal": NaN, 
+        "rate_ps": 175, 
+        "rate_raw": 350, 
+        "rate_trigger": 157, 
+        "time_drift": -1.9e-06, 
+        "time_offset": 0.0
     }
 }
