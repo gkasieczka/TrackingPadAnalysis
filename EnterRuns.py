@@ -81,7 +81,7 @@ while True:
         # Overwrite the run-list file
         RunInfo.dump(runs_filename)
         
-        print "Created run {0} and updated {1}"
+        print "Created run {0} and updated {1}".format(r.number, runs_filename)
         
         last_run_number = r.number
 
