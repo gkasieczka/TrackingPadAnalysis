@@ -8,7 +8,7 @@ Analysis of the Runs and plot production
 # Imports
 ###############################
 
-import ROOT, copy, sys
+import ROOT, copy, sys, math
 from RunInfo import RunInfo
 import AnalyzeHelpers as ah
 
@@ -28,8 +28,8 @@ def usage():
 ROOT.gStyle.SetPalette(53)
 ROOT.gStyle.SetNumberContours( 999 )
 
-def getPedestal(hist):
-    tmp_hist = copy.deepcopy(hist.ProjectionY)
+def getPedestalValue(hist):
+    tmp_hist = copy.deepcopy(hist.ProjectionY())
     tmp_hist.Fit('gaus')
     central = tmp_hist.GetFunction('gaus').GetParameter(1)
     return central
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     RunInfo.load('runs.json')
 
     
-    my_run = RunInfo.runs[63]
+    my_run = RunInfo.runs[int(sys.argv[-1])]
     print my_run.__dict__
 
     n_ev = my_tree.GetEntries()
@@ -237,11 +237,17 @@ if __name__ == "__main__":
              25,   -0.30,   0.20, 
              25,   -0.10,   0.40, 
             200, -400.00, 400.00)
-        #h_3d.SetDirectory(0)
+
+        if math.isnan(my_run.pedestal):
+            print 'analyze the pedestal run first!! it\'s run', my_run.pedestal_run
+            sys.exit()
+        else:
+            pedestal = my_run.pedestal
 
         ########################################
         # get the times of first and last events
         ########################################
+
         my_tree.GetEntry(0)
         ## CHANGE THIS TO T_PAD EVENTUALLY!!!
         time_first = my_tree.n_pad
@@ -250,8 +256,7 @@ if __name__ == "__main__":
         length = time_last - time_first
         mins = length/10000. ## should be 60 for time in seconds
 
-        h_time_2d = ROOT.TH2F('h_time_2d', 'h_time_2d', int(mins+2), 0., int(mins+2), 500, -250., 250.)
-        #h_time_2d.SetDirectory(0)
+        h_time_2d = ROOT.TH2F('h_time_2d', 'h_time_2d', int(mins+1), 0., int(mins+1), 500, -250., 250.)
     
         print 'run of %.2f minutes length' %(mins)
         
@@ -259,15 +264,15 @@ if __name__ == "__main__":
         for ev in my_tree:
             if ev.track_x < -99. and ev.track_y < -99.: ## ommit empty events
                 continue
-            if ev.integral50 == -1.:
+            if ev.integral50 == -1.: # these are calibration events
                 continue
             rel_time = int( (ev.n_pad - time_first) / 10000.) ## change to t_pad 
         
             # fill the 3D histogram
-            h_3d.Fill(ev.track_x, ev.track_y, ev.integral50)
+            h_3d.Fill(ev.track_x, ev.track_y, ev.integral50 - pedestal)
         
             # fill all the time histograms with the integral
-            h_time_2d.Fill(rel_time, ev.integral50)
+            h_time_2d.Fill(rel_time, ev.integral50 - pedestal)
         
         # re-open file for writing
         infile.ReOpen('UPDATE')
@@ -277,12 +282,29 @@ if __name__ == "__main__":
         h_time_2d.Write()
         loaded = True
     
-    if my_run.pedestal_run is my_run.number:
-        pedestal = getPedestal(h_time_2d)
+    if my_run.pedestal_run == -1:
+        print '------------------------------------'
+        print '--- this is a pedestal run ---------'
+        print '------------------------------------'
+        pedestal = getPedestalValue(h_time_2d)
+        my_run.pedestal = pedestal
+        for rn, r in RunInfo.runs.items():
+            if r == my_run: continue
+            if r.pedestal_run == my_run.number:
+                r.pedestal = pedestal
+        RunInfo.dump('marc_runs.json')
+        
+        
+    else:
+        print '------------------------------------'
+        print '--- this is a data run -------------'
+        print '------------------------------------'
+        if math.isnan(my_run.pedestal):
+            print 'this run still needs a pedestal!'
+            ped_run = my_run.pedestal_run
 
-    makeXYPlots(h_3d)
-
-    #b = makeTimePlots(h_time_2d)
+        makeXYPlots(h_3d)
+        #b = makeTimePlots(h_time_2d)
 
     infile.Close()
 
