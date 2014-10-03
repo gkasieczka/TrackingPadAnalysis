@@ -37,7 +37,6 @@ def getPedestalValue(hist):
 
 def makeTimePlots(h_time_2d):
     profileY = h_time_2d.ProfileY()
-
     neg_landau = False
     if profileY.GetMean() < 0.:
         neg_landau = True
@@ -47,6 +46,18 @@ def makeTimePlots(h_time_2d):
     else:
         func = ROOT.TF1('my_landau','[0] * TMath::Landau(x,[1],[2])' , h_time_2d.GetYaxis().GetXmin(), h_time_2d.GetYaxis().GetXmax())
     func.SetParameters(1, h_time_2d.GetMean(), h_time_2d.GetRMS() )
+
+
+    land = h_time_2d.ProjectionY()
+    land.Fit(func)
+    c0 = ROOT.TCanvas('time_canvas', 'Canvas of the time evolution', 600, 300)
+    if neg_landau:
+        land.GetXaxis().SetRangeUser(-250,0)
+    else:
+        land.GetXaxis().SetRangeUser(0,250)
+    land.Draw()
+    c0.SaveAs('results/run_'+str(my_rn)+'/landau.pdf')
+
 
     arr = ROOT.TObjArray()
     h_time_2d.FitSlicesY(func, 0, -1, 0, 'QNR', arr)
@@ -64,7 +75,6 @@ def makeTimePlots(h_time_2d):
     for ibin in range(1,mpvs.GetNbinsX()+1):
         mpvs.SetBinError(ibin, errs.GetBinContent(ibin))
 
-    c0 = ROOT.TCanvas('time_canvas', 'Canvas of the time evolution', 600, 300)
 
     h_time_2d.SetTitle('Time evolution of the signal pulse')
     # x-axis
@@ -79,7 +89,7 @@ def makeTimePlots(h_time_2d):
     h_time_2d.Draw('colz')
     mpvs.Draw('same pe')
 
-    c0.SaveAs('time_2d.pdf')
+    c0.SaveAs('results/run_'+str(my_rn)+'/time_2d.pdf')
     return arr
 
 
@@ -174,7 +184,7 @@ def makeXYPlots(h_3d):
     h_2d_sigma.Draw('colz')
     h_2d_sigma.GetZaxis().SetRangeUser(0., central+10.)
     
-    c1.SaveAs('plots.pdf')
+    c1.SaveAs('results/run_'+str(my_rn)+'/plots.pdf')
     # ROOT.gStyle.Reset()
     # reset the style
     ROOT.gStyle.SetTitleSize(tmp_size,'t')
@@ -193,22 +203,24 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     ###############################
-    # get the correct file for the selected run
-    ###############################
-    
-    # adapt these lines to find the right file eventually
-    infile = ROOT.TFile('../track_info.root','READ')
-    my_tree = infile.Get('track_info')
-
-    ###############################
     # Get all the runs from the json
     ###############################
     
     RunInfo.load('runs.json')
 
     
-    my_run = RunInfo.runs[int(sys.argv[-1])]
+    global my_rn
+    my_rn  = int(sys.argv[-1])
+    my_run = RunInfo.runs[my_rn]
     print my_run.__dict__
+
+    ###############################
+    # get the correct file for the selected run
+    ###############################
+    
+    # adapt these lines to find the right file eventually
+    infile = ROOT.TFile('results/run_'+str(my_rn)+'/track_info.root','READ')
+    my_tree = infile.Get('track_info')
 
     n_ev = my_tree.GetEntries()
     
@@ -238,9 +250,14 @@ if __name__ == "__main__":
              25,   -0.10,   0.40, 
             200, -400.00, 400.00)
 
-        if math.isnan(my_run.pedestal):
+        runPedestal = math.isnan(my_run.pedestal) and (my_run.pedestal_run == -1 or my_run.number == my_run.pedestal_run)
+
+        print 'is nan?', math.isnan(my_run.pedestal)
+        if math.isnan(my_run.pedestal) and (my_run.pedestal_run != -1 and my_run.number != my_run.pedestal_run):
             print 'analyze the pedestal run first!! it\'s run', my_run.pedestal_run
             sys.exit()
+        if runPedestal:
+            pedestal = 0.
         else:
             pedestal = my_run.pedestal
 
@@ -249,12 +266,11 @@ if __name__ == "__main__":
         ########################################
 
         my_tree.GetEntry(0)
-        ## CHANGE THIS TO T_PAD EVENTUALLY!!!
-        time_first = my_tree.n_pad
+        time_first = my_tree.t_pad
         my_tree.GetEntry(n_ev-1)
-        time_last  = my_tree.n_pad
+        time_last  = my_tree.t_pad
         length = time_last - time_first
-        mins = length/10000. ## should be 60 for time in seconds
+        mins = length/60.
 
         h_time_2d = ROOT.TH2F('h_time_2d', 'h_time_2d', int(mins+1), 0., int(mins+1), 500, -250., 250.)
     
@@ -266,7 +282,7 @@ if __name__ == "__main__":
                 continue
             if ev.integral50 == -1.: # these are calibration events
                 continue
-            rel_time = int( (ev.n_pad - time_first) / 10000.) ## change to t_pad 
+            rel_time = int( (ev.t_pad - time_first) / 60.) ## change to t_pad 
         
             # fill the 3D histogram
             h_3d.Fill(ev.track_x, ev.track_y, ev.integral50 - pedestal)
@@ -282,7 +298,7 @@ if __name__ == "__main__":
         h_time_2d.Write()
         loaded = True
     
-    if my_run.pedestal_run == -1:
+    if my_run.data_type == 1:
         print '------------------------------------'
         print '--- this is a pedestal run ---------'
         print '------------------------------------'
@@ -292,7 +308,7 @@ if __name__ == "__main__":
             if r == my_run: continue
             if r.pedestal_run == my_run.number:
                 r.pedestal = pedestal
-        RunInfo.dump('marc_runs.json')
+        RunInfo.dump('runs.json')
         
         
     else:
@@ -304,7 +320,7 @@ if __name__ == "__main__":
             ped_run = my_run.pedestal_run
 
         makeXYPlots(h_3d)
-        #b = makeTimePlots(h_time_2d)
+        b = makeTimePlots(h_time_2d)
 
     infile.Close()
 
