@@ -13,6 +13,7 @@ import os
 import sys
 import array
 import math
+from RunInfo import RunInfo
 
 import ROOT
 
@@ -28,6 +29,11 @@ def print_usage():
     print "Example: python 70 0"
 # End of print_usage
 
+
+def ensure_dir(f):
+    d = os.path.dirname(f)
+    if not os.path.exists(d):
+        os.makedirs(d)
 
 ###############################
 # coordinate_to_box
@@ -172,7 +178,14 @@ class RunTiming:
     # End of print_info
 # End of class RunTiming
 
- 
+
+
+def update_run_info(run_timing):
+    run_timing.print_info()
+    RunInfo.load('runs.json')
+    RunInfo.update_timing(run_timing.run,run_timing.align_pixel,run_timing.align_pad,run_timing.offset,run_timing.slope)
+    RunInfo.dump('runs.json')
+
 ###############################
 # print_run_info
 ###############################
@@ -215,12 +228,30 @@ def print_run_info(run, tree_pixel, tree_pad, branch_names):
 # find_alignment
 ###############################
  
-def find_alignment(run, tree_pixel, tree_pad, branch_names, c):
+def find_alignment(run, tree_pixel, tree_pad, branch_names, c,output_dir = './results'):
+    result_dir = "{0}/run_{1}/".format(output_dir,run)
+    ensure_dir(result_dir)
+
+    RunInfo.load('runs.json')
 
     max_align_pad = 10
     max_align_pixel = 40
 
-    run_timing = RunTiming.runs[run]
+    if run not in RunInfo.runs:
+        raise Exception('cannot find run {run} in RunInfo json - Please add run first'.format(run=run))\
+
+    thisInfo = RunInfo.runs[run]
+        # #align_ev_pixel = -1,     # [int] pixel event for time-align
+        #        align_ev_pad = -1,       # [int] pad event for time align
+        #        time_offset = 0.,        # float (seconds)
+        #        time_drift = -1.9e-6):   # drift between pixel and pad clock
+    run_timing = RunTiming(run,
+                           thisInfo.time_offset,
+                           thisInfo.time_drift,
+                           thisInfo.align_ev_pixel,
+                           thisInfo.align_ev_pad,
+                           thisInfo.diamond,
+                           thisInfo.bias_voltage)
 
     # We are going to select the alignment event with the lowest residual RMS
     # Make a list of triples: [pixel_event, pad_event, residual RMS]
@@ -280,7 +311,7 @@ def find_alignment(run, tree_pixel, tree_pad, branch_names, c):
                 # End of loop over pad events
 
             h.Draw()
-            c.Print("run_{0}/ipad_{1}_ipixel_{2}.pdf".format(run, i_align_pad, i_align_pixel))
+            c.Print("{0}/ipad_{1}_ipixel_{2}.pdf".format(result_dir, i_align_pad, i_align_pixel))
 
             print "Pad Event {0} / Pixel Event {1}: Mean: {2:2.6f} RMS:{3:2.6f}".format(i_align_pad, 
                                                                                         i_align_pixel, 
@@ -310,13 +341,29 @@ def find_alignment(run, tree_pixel, tree_pad, branch_names, c):
     run_timing.align_pixel = best_i_align_pixel
     run_timing.align_pad = best_i_align_pad
     run_timing.print_info()
+    update_run_info(run_timing)
 
 
 ###############################
 # analyze
 ###############################
 
-def analyze(run, action, tree_pixel, tree_pad, branch_names, c):
+def analyze(run, action, tree_pixel, tree_pad, branch_names, c, output_dir ="./results"):
+    ensure_dir(output_dir)
+    RunInfo.load('runs.json')
+    
+    if run not in RunInfo.runs:
+        raise Exception('cannot find run {run} in RunInfo json - Please add run first'.format(run=run))\
+
+    thisInfo = RunInfo.runs[run]
+    print thisInfo
+    run_timing = RunTiming(run,
+                       thisInfo.time_offset,
+                       thisInfo.time_drift,
+                       thisInfo.align_ev_pixel,
+                       thisInfo.align_ev_pad,
+                       thisInfo.diamond,
+                       thisInfo.bias_voltage)
 
     if action == 1:
         test_string = "_short"
@@ -324,7 +371,9 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c):
         test_string = ""
 
     # Output ROOT File
-    filename_out = "run_{0}/track_info{1}.root".format(run, test_string)
+    result_dir = "{0}/run_{1}/".format(output_dir,run)
+    ensure_dir(result_dir)
+    filename_out = "{0}/track_info{1}.root".format(result_dir, test_string)
     f_out = ROOT.TFile(filename_out, "recreate")
 
     # Output Tree
@@ -366,8 +415,10 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c):
         max_events = tree_pad.GetEntries()-1
 
     # Get the run-timing and diamond/mask
-    run_timing = RunTiming.runs[run]    
-    diamond = Diamond.diamonds[run_timing.diamond_name]
+
+    thisMask =  thisInfo.get_mask()
+
+    diamond =  Diamond(thisMask.diamond, thisMask.min_x, thisMask.max_x, thisMask.min_y, thisMask.max_y)
 
     # Get initial-times
     tree_pad.GetEntry(run_timing.align_pad)
@@ -509,7 +560,7 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c):
     h.GetXaxis().SetTitle("t_{pixel} - t_{pad} [s]")
     h.GetYaxis().SetTitle("Events")
     h.Draw()
-    c.Print("run_{0}/residual{1}.pdf".format(run, test_string))
+    c.Print("{0}/residual{1}.pdf".format(result_dir, test_string))
 
     print h2,c
     fun = ROOT.TF1("fun", "[0]+[1]*x")
@@ -518,7 +569,7 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c):
     h2.GetXaxis().SetTitle("t_{pad} [s]")
     h2.GetYaxis().SetTitle("t_{pixel} - t_{pad} [s]")
     h2.Draw()
-    c.Print("run_{0}/time{1}.pdf".format(run, test_string))
+    c.Print("{0}/time{1}.pdf".format(result_dir, test_string))
 
     run_timing.offset -= fun.GetParameter(0)
     run_timing.slope  -= fun.GetParameter(1)    
@@ -526,7 +577,7 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c):
 
     c.SetLogy(1)
     h_delta_n.Draw()
-    c.Print("run_{0}/delta_n{1}.pdf".format(run, test_string))
+    c.Print("{0}/delta_n{1}.pdf".format(result_dir, test_string))
     c.SetLogy(0)
 
 
@@ -536,7 +587,7 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c):
     h_calib_events.GetYaxis().SetTitle("Pad Calibration Flag")
     h_calib_events.GetYaxis().SetTitleOffset(1.5)
     h_calib_events.Draw("COLZTEXT")
-    c.Print("run_{0}/calib_events{1}.pdf".format(run, test_string))
+    c.Print("{0}/calib_events{1}.pdf".format(result_dir, test_string))
 
     ROOT.gStyle.SetOptStat(0)
     c.SetLogz(1)
@@ -544,7 +595,7 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c):
     h_tracks.GetYaxis().SetTitle("Pad position y [cm]")
     h_tracks.GetYaxis().SetTitleOffset(1.5)
     h_tracks.Draw("COLZ")
-    c.Print("run_{0}/tracks{1}.pdf".format(run, test_string))
+    c.Print("{0}/tracks{1}.pdf".format(result_dir, test_string))
 
     ROOT.gStyle.SetOptStat(0)
     c.SetLogz(1)
@@ -552,7 +603,7 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c):
     h_tracks_zoom.GetYaxis().SetTitle("Pad position y [cm]")
     h_tracks_zoom.GetYaxis().SetTitleOffset(1.5)
     h_tracks_zoom.Draw("COLZ")
-    c.Print("run_{0}/tracks_zoom{1}.pdf".format(run, test_string))
+    c.Print("{0}/tracks_zoom{1}.pdf".format(result_dir, test_string))
 
 
     ROOT.gStyle.SetOptStat(0)
@@ -565,7 +616,7 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c):
     proj.GetYaxis().SetTitleOffset(1.5)
 
     proj.Draw("COLZ")
-    c.Print("run_{0}/integral{1}_fullrange.pdf".format(run, test_string))
+    c.Print("{0}/integral{1}_fullrange.pdf".format(result_dir, test_string))
 
 
     ROOT.gStyle.SetOptStat(0)
@@ -578,7 +629,7 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c):
     proj_zoom.GetYaxis().SetTitleOffset(1.5)
 
     proj_zoom.Draw("COLZ")
-    c.Print("run_{0}/integral{1}_zoom_fullrange.pdf".format(run, test_string))
+    c.Print("{0}/integral{1}_zoom_fullrange.pdf".format(result_dir, test_string))
 
 
     if run_timing.bias_voltage > 0:
@@ -595,10 +646,10 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c):
         proj_zoom.SetMaximum(500)
 
     proj.Draw("COLZ")
-    c.Print("run_{0}/integral{1}.pdf".format(run, test_string))
+    c.Print("{0}/integral{1}.pdf".format(result_dir, test_string))
 
     proj_zoom.Draw("COLZ")
-    c.Print("run_{0}/integral_zoom{1}.pdf".format(run, test_string))
+    c.Print("{0}/integral_zoom{1}.pdf".format(result_dir, test_string))
 
     for x_pos in range(n_boxes):
         for y_pos in range(n_boxes):
@@ -610,11 +661,10 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c):
                                                                          fun.GetParameter(1), 
                                                                          fun.GetParameter(2))
             integral_box_matrix[x_pos][y_pos].Draw()
-            c.Print("run_{0}/1d_integral_x_{1}_y_{2}{3}.pdf".format(run, x_pos, y_pos, test_string))
-            c.Print("run_{0}/1d_integral_x_{1}_y_{2}{3}.png".format(run, x_pos, y_pos, test_string))
+            c.Print("{0}/1d_integral_x_{1}_y_{2}{3}.pdf".format(result_dir, x_pos, y_pos, test_string))
+            c.Print("{0}/1d_integral_x_{1}_y_{2}{3}.png".format(result_dir, x_pos, y_pos, test_string))
 
 
     f_out.Write()
-
-    run_timing.print_info()
+    update_run_info(run_timing)
 # end of analyze

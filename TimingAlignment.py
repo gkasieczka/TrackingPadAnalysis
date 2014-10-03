@@ -32,6 +32,7 @@ parser.add_argument('run',metavar='R', type=int,help='run: run number (int)')
 parser.add_argument('action',metavar='A', type=int,help='action: 0=analyze    1=run on small sample     2=find alignment    3=do everything')
 parser.add_argument('-diamond',type=str,help='only needed for action=3')
 parser.add_argument('-voltage',type=int,help='only needed for action=3')
+parser.add_argument('--output-dir','-o',dest='output',help='output directory',default='./results/')
 args = parser.parse_args()
 
 run = args.run
@@ -65,7 +66,10 @@ print "Going to process run {0} with action = {1}".format(run, action)
 ###############################
 # Diamonds
 ###############################
-
+#from maskinfo import maskinfo
+#maskinfo.load(maskinfo.json)
+# maskinfo.masks
+#TAH.SetMask(masks)
 TAH.Diamond("dummy", -1., 1., -1., 1.)
 TAH.Diamond("IIa-2", -0.2, 0.2, 0., 0.4)
 TAH.Diamond("IIa-3", -0.25, 0.15, -0.05, 0.35)
@@ -104,7 +108,7 @@ TAH.RunTiming(463, 0.000150546696306, 1.66309765368e-06, 1, 1, "IIa-3", 500)
 
 # IIa-3, negative voltage
 TAH.RunTiming(528, -0.000415933095508, 1.60475855132e-06, 6, 1, "IIa-3", -25)
-TAH.RunTiming(532, -5.38246743255e-05, 1.97836071279e-06, 14, 1, "IIa-3", -50)
+# TAH.RunTiming(532, -5.38246743255e-05, 1.97836071279e-06, 14, 1, "IIa-3", -50)
 TAH.RunTiming(534, -0.00016191126604, 1.64201756052e-06, 0, 0, "IIa-3", -75)
 TAH.RunTiming(546, 1.52929003315e-05, 1.69038314973e-06, 0, 0, "IIa-3", -500)
 TAH.RunTiming(558, 0.000554312131921, 1.75928791575e-06, 0, 0, "IIa-3", -500)
@@ -160,14 +164,15 @@ except:
 ###############################
 # Get Trees
 ###############################
-
-basedir_pad = "../padreadout-devel/data/output/"
-basedir_pixel = "../DHidasPLT-devel/plots/"
+#
+basedir_pad = "/scratch/PLT/pad_out/"
+basedir_pixel="/home/bachmair/sdvlp/PLT/DHidasPLT/plots/"
 
 format_pad = "{0}run_2014_09r{1:06d}.root"
 format_pixel = "{0}{1:06d}/histos.root"
 
 filename_pad = format_pad.format(basedir_pad, run)
+print filename_pad
 filename_pixel = format_pixel.format(basedir_pixel, run)
 
 f_pad = ROOT.TFile.Open(filename_pad)
@@ -192,7 +197,7 @@ if (action == 0) or (action == 1):
                 tree_pixel, 
                 tree_pad, 
                 branch_names, 
-                c)
+                c, args.output)
 
 elif action == 2:
     TAH.print_run_info(run, tree_pixel, tree_pad, branch_names)
@@ -200,29 +205,29 @@ elif action == 2:
                        tree_pixel, 
                        tree_pad, 
                        branch_names, 
-                       c)
+                       c, args.output)
 
 elif action == 3:
 
-    TAH.RunTiming(run, diamond_name = diamond, bias_voltage = bias_voltage)
+    # TAH.RunTiming(run, diamond_name = diamond, bias_voltage = bias_voltage)
 
     TAH.find_alignment(run, 
                        tree_pixel, 
                        tree_pad, 
                        branch_names, 
-                       c)
+                       c, args.output)
 
     TAH.analyze(run, 
                 1,
                 tree_pixel, 
                 tree_pad, 
                 branch_names, 
-                c)
+                c, args.output)
 
     TAH.analyze(run, 
                 0,
                 tree_pixel, 
                 tree_pad, 
                 branch_names, 
-                c)
+                c, args.output)
 

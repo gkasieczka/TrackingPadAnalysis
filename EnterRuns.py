@@ -7,7 +7,7 @@ Program to populate the run info database
 ###############################
 # Imports
 ###############################
-
+from DataTypes import data_types
 import sys
 
 from RunInfo import RunInfo
@@ -58,8 +58,8 @@ while True:
 
         print "\nEnter {0}: (default = {1}). (or type reset or exit)".format(argument_name, last_argument)
         if argument_name == "data_type":
-            for k in sorted(RunInfo.data_types.keys()):
-                print "{0}: {1}".format(k, RunInfo.data_types[k])
+            for k in sorted(data_types.keys()):
+                print "{0}: {1}".format(k, data_types[k])
 
         if argument_name == "pedestal_run":
             print "run from which to take pedestal information"
