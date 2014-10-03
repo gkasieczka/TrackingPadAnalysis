@@ -30,11 +30,14 @@ ROOT.gStyle.SetNumberContours( 999 )
 
 def getPedestalValue(hist):
     tmp_hist = copy.deepcopy(hist.ProjectionY())
-    tmp_hist.Fit('gaus')
-    central = tmp_hist.GetFunction('gaus').GetParameter(1)
+    rms = tmp_hist.GetRMS()
+    mp = tmp_hist.GetBinCenter(tmp_hist.GetMaximumBin())
+    func = ROOT.TF1('gaus_fit','gaus',mp-rms/2,mp+rms/2)
+    tmp_hist.Fit(func,'','',mp-rms/2,mp+rms/2)
+    central = func.GetParameter(1)
     c0 = ROOT.TCanvas('foo', 'bar', 600, 600)
     tmp_hist.Draw('')
-    timp_hist.GetFunction('gaus').Draw('same')
+    func.Draw('same')
     c0.SaveAs('results/run_'+str(my_rn)+'/pedestal.pdf')
     return central
     
