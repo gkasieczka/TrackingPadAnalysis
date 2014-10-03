@@ -288,7 +288,7 @@ def find_alignment(run, tree_pixel, tree_pad, branch_names, c,output_dir = './re
 
             initial_t_pixel = getattr(tree_pixel, branch_names["t_pixel"])
 
-            h = ROOT.TH1F("", "", 100, -0.005, 0.005)
+            h = ROOT.TH1F("h_pad{i_pad}_pixel{i_pixel}", "", 1600, -0.04, 0.04)
 
             i_pixel = 0
 
@@ -346,7 +346,8 @@ def find_alignment(run, tree_pixel, tree_pad, branch_names, c,output_dir = './re
         if found_good_match:
             break        
     # End of loop over pad alignment events
-
+    if li_residuals_rms == 0:
+        raise Exception('did not find a good candidate')
     best_i_align_pixel = sorted(li_residuals_rms, key = lambda x: abs(x[index_rms]))[0][index_pixel]
     best_i_align_pad = sorted(li_residuals_rms, key = lambda x: abs(x[index_rms]))[0][index_pad]
     
