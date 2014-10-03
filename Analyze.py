@@ -32,6 +32,10 @@ def getPedestalValue(hist):
     tmp_hist = copy.deepcopy(hist.ProjectionY())
     tmp_hist.Fit('gaus')
     central = tmp_hist.GetFunction('gaus').GetParameter(1)
+    c0 = ROOT.TCanvas('foo', 'bar', 600, 600)
+    tmp_hist.Draw('')
+    timp_hist.GetFunction('gaus').Draw('same')
+    c0.SaveAs('results/run_'+str(my_rn)+'/pedestal.pdf')
     return central
     
 
@@ -265,12 +269,17 @@ if __name__ == "__main__":
         # get the times of first and last events
         ########################################
 
+        # make the time binning 10 minutes for < 100 Hz and one minute above
+        time_binning = 60.
+        if my_run.rate_trigger < 100:
+            time_binning = 600.
+
         my_tree.GetEntry(0)
         time_first = my_tree.t_pad
         my_tree.GetEntry(n_ev-1)
         time_last  = my_tree.t_pad
         length = time_last - time_first
-        mins = length/60.
+        mins = length/time_binning
 
         h_time_2d = ROOT.TH2F('h_time_2d', 'h_time_2d', int(mins+1), 0., int(mins+1), 500, -250., 250.)
     
@@ -282,7 +291,7 @@ if __name__ == "__main__":
                 continue
             if ev.integral50 == -1.: # these are calibration events
                 continue
-            rel_time = int( (ev.t_pad - time_first) / 60.) ## change to t_pad 
+            rel_time = int( (ev.t_pad - time_first) / time_binning) ## change to t_pad 
         
             # fill the 3D histogram
             h_3d.Fill(ev.track_x, ev.track_y, ev.integral50 - pedestal)
