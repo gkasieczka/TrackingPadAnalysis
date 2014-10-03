@@ -46,51 +46,66 @@ def drawHisto(hist):
         c.SaveAs('time_evolution.pdf')
         
 
+def turnHisto(hist):
+    tmp_hist = copy.deepcopy(hist)
+    nbins = hist.GetNbinsX()
+    for bin in range(0,nbins):
+        tmp_hist.SetBinContent(nbins-bin, hist.GetBinContent(bin+1))
+        tmp_hist.SetBinError  (nbins-bin, hist.GetBinError  (bin+1))
+    return tmp_hist
+
 def fitLandauGaus(hist):
 
     neg_landau = False
     if hist.GetMean() < 0.:
         neg_landau = True
-
     if neg_landau:
-        func = ROOT.TF1('my_landau','[0] * TMath::Landau(-x,[1],[2])', hist.GetXaxis().GetXmin(), hist.GetXaxis().GetXmax())
-        func.SetParameters(1, hist.GetMean(), hist.GetRMS() )
-    else:
-        func = ROOT.TF1('my_landau','[0] * TMath::Landau(x,[1],[2])', hist.GetXaxis().GetXmin(), hist.GetXaxis().GetXmax())
-        func.SetParameters(1, hist.GetMean(), hist.GetRMS() )
+        hist = turnHisto(hist)
 
-    hist.Fit('my_landau')
-    #hist.GetFunction('my_landau').Draw('same')
-    return hist, hist.GetFunction('my_landau')
+    #if neg_landau:
+    #    func = ROOT.TF1('my_landau','[0] * TMath::Landau(-x,[1],[2])', hist.GetXaxis().GetXmin(), hist.GetXaxis().GetXmax())
+    #    func.SetParameters(1, hist.GetMean(), hist.GetRMS() )
+    #else:
+    func = ROOT.TF1('my_landau','[0] * TMath::Landau(x,[1],[2])', hist.GetXaxis().GetXmin(), hist.GetXaxis().GetXmax())
+    func.SetParameters(1, hist.GetMean(), hist.GetRMS() )
 
-## ROOFIT SCHAS
-    ## roofit schas x = RooRealVar('x', 'x', hist.GetXaxis().GetXmin(), hist.GetXaxis().GetXmax())
-    ## roofit schas ral = RooArgList(x)
-    ## roofit schas dh = RooDataHist('dh', 'dh', ral, RooFit.Import(hist))
-    ## roofit schas 
-    ## roofit schas 
-    ## roofit schas t = RooRealVar('t', 't', hist.GetXaxis().GetXmin(), hist.GetXaxis().GetXmax())
-    ## roofit schas 
-    ## roofit schas ml     = RooRealVar('ml', 'mean landau' , hist.GetMean(), hist.GetXaxis().GetXmin(),  hist.GetXaxis().GetXmax())
-    ## roofit schas sl     = RooRealVar('sl', 'sigma landau', 10., 0.1, 30)
-    ## roofit schas landau = RooLandau('lx', 'lx', t, ml, sl)
-    ## roofit schas 
-    ## roofit schas mg     = RooRealVar('mg', 'mean gaus' , hist.GetMean(), hist.GetXaxis().GetXmin(),  hist.GetXaxis().GetXmax())
-    ## roofit schas sg     = RooRealVar('sg', 'sigma gaus', 10., 0.1, 30)
-    ## roofit schas gaus   = RooGaussian('lx', 'lx', t, ml, sl)
-    ## roofit schas 
-    ## roofit schas t.setBins(hist.GetNbinsX(),'cache')
-    ## roofit schas 
-    ## roofit schas ## Construct landau (x) gauss
-    ## roofit schas lxg = RooFFTConvPdf("lxg","landau (X) gaus", t, landau, gaus)
-    ## roofit schas lxg.fitTo(dh)
+    hist.Fit('my_landau','q')
+    fit_res = []
+    fit_res.append(func.GetParameter(0) if not neg_landau else     func.GetParameter(0))
+    fit_res.append(func.GetParameter(1) if not neg_landau else -1.*func.GetParameter(1))
+    fit_res.append(func.GetParameter(2) if not neg_landau else     func.GetParameter(2))
+    return hist, fit_res
 
-    ## roofit schas frame = t.frame(Title('landau (x) gauss convolution'))
-    ## roofit schas hist.plotOn(frame)
-    ## roofit schas lxg.plotOn(frame)
-    ## roofit schas landau.plotOn(frame,LineStyle(ROOT.kDashed))
+## ROOFIT VERSION
 
-    ## roofit schas c = ROOT.TCanvas('lg_convolution','landau (x) gaus', 600, 600)
-    ## roofit schas ROOT.gPad.SetLeftMargin(0.15)
-    ## roofit schas frame.GetYaxis().SetTitleOffset(1.4)
-    ## roofit schas frame.Draw()
+    ### x   = RooRealVar('x', 'x', hist.GetXaxis().GetXmin(), hist.GetXaxis().GetXmax())
+    ### ral = RooArgList(x)
+    ### dh  = RooDataHist('dh', 'dh', ral, RooFit.Import(hist))
+    ### 
+    ### 
+    ### ml     = RooRealVar('ml', 'mean landau' , hist.GetMean(), hist.GetXaxis().GetXmin(),  hist.GetXaxis().GetXmax())
+    ### sl     = RooRealVar('sl', 'sigma landau', 10., -30., 30.)
+    ### landau = RooLandau ('lx', 'lx', x, ml, sl)
+    ### 
+    ### mg     = RooRealVar ('mg', 'mean gaus' , hist.GetMean(), hist.GetXaxis().GetXmin(),  hist.GetXaxis().GetXmax())
+    ### sg     = RooRealVar ('sg', 'sigma gaus', 10., -30., 30.)
+    ### gaus   = RooGaussian('gx', 'gx', x, mg, sg)
+    ### 
+    ### x.setBins(1000,'cache')
+    ### 
+    ### ## Construct landau (x) gauss
+    ### lxg = RooFFTConvPdf('lxg','landau (x) gaus', x, landau, gaus)
+    ### lxg.fitTo(dh)
+
+    ### a = lxg.getParameters(dh)
+    ### return a
+
+    ### # frame = x.frame(RooFit.Title('landau (x) gauss convolution'))
+    ### # dh.plotOn(frame)
+    ### # lxg.plotOn(frame)
+    ### # landau.plotOn(frame,RooFit.LineStyle(ROOT.kDashed))
+    ### 
+    ### # c = ROOT.TCanvas('lg_convolution','landau (x) gaus', 600, 600)
+    ### # ROOT.gPad.SetLeftMargin(0.15)
+    ### # frame.GetYaxis().SetTitleOffset(1.4)
+    ### # frame.Draw()
