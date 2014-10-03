@@ -31,9 +31,20 @@ def print_usage():
 
 
 def ensure_dir(f):
-    d = os.path.dirname(f)
-    if not os.path.exists(d):
-        os.makedirs(d)
+
+    print 'ensure dir: ',f
+    if not f.endswith('/'):
+        f = os.path.abspath(f)
+        d = os.path.dirname(f)
+        print 'ensure dir: ',f,d
+        if not os.path.exists(d):
+
+            print 'make dir',d
+            os.makedirs(d)
+    else:
+        if not os.path.exists(f):
+            os.makedirs(f)
+
 
 ###############################
 # coordinate_to_box
@@ -231,6 +242,7 @@ def print_run_info(run, tree_pixel, tree_pad, branch_names):
 def find_alignment(run, tree_pixel, tree_pad, branch_names, c,output_dir = './results'):
     result_dir = "{0}/run_{1}/".format(output_dir,run)
     ensure_dir(result_dir)
+    print result_dir
 
     RunInfo.load('runs.json')
 
@@ -311,7 +323,9 @@ def find_alignment(run, tree_pixel, tree_pad, branch_names, c,output_dir = './re
                 # End of loop over pad events
 
             h.Draw()
-            c.Print("{0}/ipad_{1}_ipixel_{2}.pdf".format(result_dir, i_align_pad, i_align_pixel))
+            ensure_dir("{0}/aligning/".format(result_dir))
+            c.Print(os.path.abspath("{0}/aligning/ipad_{1}_ipixel_{2}.pdf".format(result_dir, i_align_pad, i_align_pixel)))
+            c.Print(os.path.abspath("{0}/aligning/ipad_{1}_ipixel_{2}.png".format(result_dir, i_align_pad, i_align_pixel)))
 
             print "Pad Event {0} / Pixel Event {1}: Mean: {2:2.6f} RMS:{3:2.6f}".format(i_align_pad, 
                                                                                         i_align_pixel, 
@@ -349,7 +363,7 @@ def find_alignment(run, tree_pixel, tree_pad, branch_names, c,output_dir = './re
 ###############################
 
 def analyze(run, action, tree_pixel, tree_pad, branch_names, c, output_dir ="./results"):
-    ensure_dir(output_dir)
+    ensure_dir(output_dir+'/')
     RunInfo.load('runs.json')
     
     if run not in RunInfo.runs:
@@ -570,6 +584,7 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c, output_dir ="./r
     h2.GetYaxis().SetTitle("t_{pixel} - t_{pad} [s]")
     h2.Draw()
     c.Print("{0}/time{1}.pdf".format(result_dir, test_string))
+    c.Print("{0}/time{1}.png".format(result_dir, test_string))
 
     run_timing.offset -= fun.GetParameter(0)
     run_timing.slope  -= fun.GetParameter(1)    
@@ -616,7 +631,8 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c, output_dir ="./r
     proj.GetYaxis().SetTitleOffset(1.5)
 
     proj.Draw("COLZ")
-    c.Print("{0}/integral{1}_fullrange.pdf".format(result_dir, test_string))
+    ensure_dir('{0}/integrals/'.format(result_dir))
+    c.Print("{0}/integrals/integral{1}_fullrange.pdf".format(result_dir, test_string))
 
 
     ROOT.gStyle.SetOptStat(0)
@@ -629,7 +645,7 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c, output_dir ="./r
     proj_zoom.GetYaxis().SetTitleOffset(1.5)
 
     proj_zoom.Draw("COLZ")
-    c.Print("{0}/integral{1}_zoom_fullrange.pdf".format(result_dir, test_string))
+    c.Print("{0}/integrals/integral{1}_zoom_fullrange.pdf".format(result_dir, test_string))
 
 
     if run_timing.bias_voltage > 0:
@@ -650,7 +666,6 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c, output_dir ="./r
 
     proj_zoom.Draw("COLZ")
     c.Print("{0}/integral_zoom{1}.pdf".format(result_dir, test_string))
-
     for x_pos in range(n_boxes):
         for y_pos in range(n_boxes):
 
@@ -661,8 +676,8 @@ def analyze(run, action, tree_pixel, tree_pad, branch_names, c, output_dir ="./r
                                                                          fun.GetParameter(1), 
                                                                          fun.GetParameter(2))
             integral_box_matrix[x_pos][y_pos].Draw()
-            c.Print("{0}/1d_integral_x_{1}_y_{2}{3}.pdf".format(result_dir, x_pos, y_pos, test_string))
-            c.Print("{0}/1d_integral_x_{1}_y_{2}{3}.png".format(result_dir, x_pos, y_pos, test_string))
+            c.Print("{0}/integrals/1d_integral_x_{1}_y_{2}{3}.pdf".format(result_dir, x_pos, y_pos, test_string))
+            c.Print("{0}/integrals/1d_integral_x_{1}_y_{2}{3}.png".format(result_dir, x_pos, y_pos, test_string))
 
 
     f_out.Write()
