@@ -396,8 +396,8 @@
         "rate_ps": 187, 
         "rate_raw": 6016, 
         "rate_trigger": 190, 
-        "time_drift": 1.6062154322289088e-06, 
-        "time_offset": -0.00038299685594847614
+        "time_drift": 1.606215931213665e-06, 
+        "time_offset": -0.00038299651970800003
     }, 
     "515": {
         "align_ev_pad": 0, 
@@ -421,7 +421,7 @@
         "rate_ps": 184, 
         "rate_raw": 5905, 
         "rate_trigger": 184, 
-        "time_drift": 1.274381689816468e-06, 
-        "time_offset": 0.00040287970179267457
+        "time_drift": 1.273889521151481e-06, 
+        "time_offset": 0.000403154011184198
     }
 }
