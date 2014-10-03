@@ -274,6 +274,7 @@ def find_alignment(run, tree_pixel, tree_pad, branch_names, c,output_dir = './re
     
     found_good_match = False
     good_match_threshold = 0.000450 # RMS below 390 ns should be a good match
+    n_events = 1000
     
     # Loop over potential pad events for aligning:
     for i_align_pad in xrange(max_align_pad):
@@ -289,10 +290,11 @@ def find_alignment(run, tree_pixel, tree_pad, branch_names, c,output_dir = './re
             initial_t_pixel = getattr(tree_pixel, branch_names["t_pixel"])
 
             h = ROOT.TH1F("h_pad{i_pad}_pixel{i_pixel}", "", 1600, -0.04, 0.04)
+            # h2 = ROOT.TH1F("h_pad{i_pad}_pixel{i_pixel}_xn", "", 800, -0.04, 0.04,100,-.5,1000.5)
 
             i_pixel = 0
 
-            for i_pad in xrange(0, 1000):
+            for i_pad in xrange(0, n_events):
 
                 tree_pad.GetEntry(i_pad)
                 time_pad = getattr(tree_pad, branch_names["t_pad"])
