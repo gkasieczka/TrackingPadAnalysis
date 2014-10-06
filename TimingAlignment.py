@@ -17,7 +17,7 @@ import math
 import argparse
 
 import ROOT
-
+import TimingAlignmentClass
 import TimingAlignmentHelpers as TAH
 
 
@@ -152,21 +152,11 @@ branch_names = {
 
 
 ###############################
-# Prepare Output Directory
-###############################
-
-try:
-    os.mkdir("run_{0}".format(run))
-except:
-    pass
-
-
-###############################
 # Get Trees
 ###############################
 #
 basedir_pad = "/scratch/PLT/pad_out/"
-basedir_pixel="/home/bachmair/sdvlp/PLT/DHidasPLT/plots/"
+basedir_pixel="/scratch/PLT/software/DHidasPLT/plots/"
 
 format_pad = "{0}run_2014_09r{1:06d}.root"
 format_pixel = "{0}{1:06d}/histos.root"
@@ -177,6 +167,10 @@ filename_pixel = format_pixel.format(basedir_pixel, run)
 
 f_pad = ROOT.TFile.Open(filename_pad)
 f_pixel = ROOT.TFile.Open(filename_pixel)
+if not f_pad :
+    raise Exception('Cannot find Pad File')
+if not f_pixel :
+    raise Exception('Cannot find Pixel File')
 
 tree_pad = f_pad.Get("rec")
 tree_pixel = f_pixel.Get("time_tree")
@@ -190,44 +184,61 @@ print "Pixel Tree: ", tree_pixel.GetEntries(), "entries"
 # Actual work
 ###############################
 
-if (action == 0) or (action == 1):
-    TAH.print_run_info(run, tree_pixel, tree_pad, branch_names)
-    TAH.analyze(run, 
-                action,
-                tree_pixel, 
-                tree_pad, 
-                branch_names, 
-                c, args.output)
+TA = TimingAlignmentClass.TimingAlignment(run, tree_pixel, tree_pad, branch_names)
+if False: # old code
+    if (action == 0) or (action == 1):
+        TAH.print_run_info(run, tree_pixel, tree_pad, branch_names)
+        TAH.analyze(run,
+                    action,
+                    tree_pixel,
+                    tree_pad,
+                    branch_names,
+                    c, args.output)
 
-elif action == 2:
-    TAH.print_run_info(run, tree_pixel, tree_pad, branch_names)
-    TAH.find_alignment(run, 
-                       tree_pixel, 
-                       tree_pad, 
-                       branch_names, 
-                       c, args.output)
+    elif action == 2:
+        TAH.print_run_info(run, tree_pixel, tree_pad, branch_names)
+        TAH.find_alignment(run,
+                           tree_pixel,
+                           tree_pad,
+                           branch_names,
+                           c, args.output)
 
-elif action == 3:
+    elif action == 3:
+        TAH.RunTiming(run, diamond_name = diamond, bias_voltage = bias_voltage)
+        TAH.find_alignment(run,
+                           tree_pixel,
+                           tree_pad,
+                           branch_names,
+                           c, args.output)
+        TAH.analyze(run,
+                    1,
+                    tree_pixel,
+                    tree_pad,
+                    branch_names,
+                    c, args.output)
 
-    # TAH.RunTiming(run, diamond_name = diamond, bias_voltage = bias_voltage)
+        TAH.analyze(run,
+                    0,
+                    tree_pixel,
+                    tree_pad,
+                    branch_names,
+                    c, args.output)
 
-    TAH.find_alignment(run, 
-                       tree_pixel, 
-                       tree_pad, 
-                       branch_names, 
-                       c, args.output)
 
-    TAH.analyze(run, 
-                1,
-                tree_pixel, 
-                tree_pad, 
-                branch_names, 
-                c, args.output)
-
-    TAH.analyze(run, 
-                0,
-                tree_pixel, 
-                tree_pad, 
-                branch_names, 
-                c, args.output)
-
+else: #new Code
+    if (action == 0) or (action == 1):
+        TAH.print_run_info(run, tree_pixel, tree_pad, branch_names)
+        TA.set_action(action)
+        TA.analyse()
+    elif action == 2:
+        TAH.print_run_info(run, tree_pixel, tree_pad, branch_names)
+        TA.set_action(action)
+        TA.analyse()
+    elif action == 3:
+        TAH.RunTiming(run, diamond_name = diamond, bias_voltage = bias_voltage)
+        TA.set_action(action)
+        TA.find_first_alignment()
+        TA.set_action(1)
+        TA.analyse()
+        TA.set_action(0)
+        TA.analyse()
