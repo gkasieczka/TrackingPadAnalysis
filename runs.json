@@ -338,8 +338,8 @@
         "time_offset": 0.0
     }, 
     "463": {
-        "align_ev_pad": 9, 
-        "align_ev_pixel": 9, 
+        "align_ev_pad": 6, 
+        "align_ev_pixel": 6, 
         "begin_date": "2014-09-25", 
         "begin_time": 216, 
         "bias_voltage": 500, 
@@ -360,12 +360,12 @@
         "rate_raw": 355, 
         "rate_trigger": 158, 
         "test_campaign": "PSI_Sept14", 
-        "time_drift": 1.646014674447417e-06, 
-        "time_offset": 0.00015260193652277164
+        "time_drift": 1.6287360143594062e-06, 
+        "time_offset": 0.00012072669157413667
     }, 
     "464": {
-        "align_ev_pad": -1, 
-        "align_ev_pixel": -1, 
+        "align_ev_pad": 1, 
+        "align_ev_pixel": 9, 
         "begin_date": "2014-09-25", 
         "begin_time": 330, 
         "bias_voltage": 500, 
@@ -386,8 +386,8 @@
         "rate_raw": 299, 
         "rate_trigger": 193, 
         "test_campaign": "PSI_Sept14", 
-        "time_drift": -1.9e-06, 
-        "time_offset": 0.0
+        "time_drift": 1.7438792971116348e-06, 
+        "time_offset": -0.000599098644599346
     }, 
     "465": {
         "align_ev_pad": -1, 
