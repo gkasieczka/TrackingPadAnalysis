@@ -92,7 +92,6 @@ class RunInfo:
         assert (type(align_ev_pad) is t.IntType), "Invalid align_ev_pad"
         assert (type(time_offset) is t.FloatType), "Invalid time_offset"
         assert (type(time_drift) is t.FloatType), "Invalid time_drift"
-        assert (type(test_campaign) is t.StringType),"Invalid test Campaign name"
 
         # Add to runs dictionary
         RunInfo.runs[self.number] = self
