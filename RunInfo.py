@@ -64,7 +64,8 @@ class RunInfo:
                  align_ev_pixel=-1,  # [int] pixel event for time-align
                  align_ev_pad=-1,  # [int] pad event for time align
                  time_offset=0.,  # float (seconds)
-                 time_drift=-1.9e-6):  # drift between pixel and pad clock
+                 time_drift=-1.9e-6,  # drift between pixel and pad clock
+                 calibration_event_fraction=-1.): # fraction of correctly matched calibration events
 
         # Validate
         assert (type(number) is t.IntType and 0 < number < 1000), "Invalid run number"
@@ -92,6 +93,7 @@ class RunInfo:
         assert (type(align_ev_pad) is t.IntType), "Invalid align_ev_pad"
         assert (type(time_offset) is t.FloatType), "Invalid time_offset"
         assert (type(time_drift) is t.FloatType), "Invalid time_drift"
+        assert (type(calibration_event_fraction) is t.FloatType),"invalid calibration_event_fraction \"{0}\"".format(calibration_event_fraction)
 
         # Add to runs dictionary
         RunInfo.runs[self.number] = self
@@ -108,8 +110,9 @@ class RunInfo:
     def update_run_info(run_timing):
         run_timing.print_info()
         RunInfo.load('runs.json')
-        RunInfo.update_timing(run_timing.run, run_timing.align_pixel, run_timing.align_pad, run_timing.offset,
-                              run_timing.slope)
+        RunInfo.runs[run_timing.number] = run_timing
+        # RunInfo.update_timing(run_timing.run, run_timing.align_pixel, run_timing.align_pad, run_timing.offset,
+        #                       run_timing.slope)
         RunInfo.dump('runs.json')
 
     def get_mask(self):
@@ -119,6 +122,15 @@ class RunInfo:
             return MaskInfo.masks[key]
         else:
             raise Exception('cannot find key {key} in {keys}'.format(key=key, keys=MaskInfo.masks.keys()))
+
+    def print_info(self):
+        print 'RunTiming({0}, {1}, {2}, {3}, {4}, "{5}", {6})'.format(self.number,
+                                                                          self.time_offset,
+                                                                          self.time_drift,
+                                                                          self.align_ev_pixel,
+                                                                          self.align_ev_pad,
+                                                                          self.diamond,
+                                                                          self.bias_voltage)
 
 
     # Dump all RunInfos (the content of the runs dictionary)
