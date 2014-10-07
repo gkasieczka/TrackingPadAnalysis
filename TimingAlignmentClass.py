@@ -70,62 +70,8 @@ def coordinate_to_box(x, y, min_x, max_x, min_y, max_y, n):
 
 
 # ##############################
-# Class: RunTiming
-# ##############################
-
-class RunTiming:
-    """ Storage class for timing alignment information between pad and pixel data.
-
-    Current memeber variables:
-    run number
-    offset (in seconds)
-    slope (in seconds/second)
-    align_pixel (which pixel event to use for aligning clocks)
-    align_pad (which pad event to use for aligning clocks)
-    diamond_name (which diamond pad was used. This is mainly used for position information at the moment)
-    bias_voltage
-    """
-
-    runs = {}
-
-    def __init__(self,
-                 run,
-                 offset=0.,
-                 slope=1.9e-6,
-                 align_pixel=0,
-                 align_pad=0,
-                 diamond_name="dummy",
-                 bias_voltage=0,
-    ):
-        self.run = run
-        self.offset = offset
-        self.slope = slope
-        self.align_pixel = align_pixel
-        self.align_pad = align_pad
-        self.diamond_name = diamond_name
-        self.bias_voltage = bias_voltage
-
-        RunTiming.runs[run] = self
-
-    # End __init__
-
-    def print_info(self):
-        print 'TAH.RunTiming({0}, {1}, {2}, {3}, {4}, "{5}", {6})'.format(self.run,
-                                                                          self.offset,
-                                                                          self.slope,
-                                                                          self.align_pixel,
-                                                                          self.align_pad,
-                                                                          self.diamond_name,
-                                                                          self.bias_voltage)
-
-        # End of print_info
-
-
-# End of class RunTiming
-
-# ##############################
 # Class: Diamond
-###############################
+# ##############################
 
 class Diamond:
     """ Storage class for diamond position related variables
@@ -185,7 +131,7 @@ class TimingAlignment:
         pass
 
     @staticmethod
-    def pixel_to_pad_time(pixel_now, pixel_0, pad_now, pad_0, offset, slope,verbose = False):
+    def pixel_to_pad_time(pixel_now, pixel_0, pad_now, pad_0, offset, slope, verbose=False):
         if False:
             print pixel_now, pixel_0, pad_now, pad_0, offset, slope
         # How many ticks have passed since first pixel time-stamp
@@ -203,7 +149,7 @@ class TimingAlignment:
     def set_action(self, action):
         self.action = action
         if action == 1:
-            self.appendix='_short'
+            self.appendix = '_short'
         else:
             self.appendix = ''
 
@@ -218,14 +164,22 @@ class TimingAlignment:
         self.tree_out = ROOT.TTree("track_info", "track_info")
 
         # Output branches
-        self.out_branches = {"n_pad": array.array('i', [0])}
+        self.out_branches = {}
+
 
         # Event Number (from pad)
+        self.out_branches["n_pad"] = array.array('i', [0])
         self.tree_out.Branch('n_pad', self.out_branches["n_pad"], 'n_pad/I')
+
+        # Matched Event Number (from pixel)
+        self.out_branches["n_matched_pixel"] = array.array('i', [0])
+        self.tree_out.Branch('n_matched_pixel', self.out_branches["n_matched_pixel"], 'n_matched_pixel/I')
 
         self.out_branches["t_pad"] = array.array('f', [0])
         self.tree_out.Branch('t_pad', self.out_branches["t_pad"], 't_pad/F')
 
+        self.out_branches["t_pixel"] = array.array('f', [0])
+        self.tree_out.Branch('t_pixel', self.out_branches["t_pixel"], 't_pixel/F')
         # Did we accept this event in the pixel+timing analysis
         # Possible reasons for rejection:
         #   - could not find event in the pixel stream
@@ -253,22 +207,20 @@ class TimingAlignment:
     def init_input_trees(self):
         self.set_events()
         # Get initial-times
-        self.tree_pad.GetEntry(self.run_timing.align_pad)
-        self.tree_pixel.GetEntry(self.run_timing.align_pixel)
+        self.tree_pad.GetEntry(self.run_timing.align_ev_pad-1)
         self.initial_t_pad = getattr(self.tree_pad, self.branch_names["t_pad"])
-        self.final_t_pixel = getattr(self.tree_pixel, self.branch_names["t_pixel"])
+        print 'Get Entry pad: ',self.run_timing.align_ev_pad,self.initial_t_pad
+
+        self.tree_pixel.GetEntry(self.run_timing.align_ev_pixel)
+        self.initial_t_pixel = getattr(self.tree_pixel, self.branch_names["t_pixel"])
+        print 'Get Entry pixel: ',self.run_timing.align_ev_pixel,self.initial_t_pixel
 
         # Get final-times
-        self.tree_pad.GetEntry(self.max_events)
-        self.tree_pixel.GetEntry(self.max_events)
+        self.tree_pad.GetEntry(self.max_events-1)
         self.final_t_pad = getattr(self.tree_pad, self.branch_names["t_pad"])
+
+        self.tree_pixel.GetEntry(self.max_events)
         self.final_t_pixel = getattr(self.tree_pixel, self.branch_names["t_pixel"])
-
-        self.tree_pad.GetEntry(self.run_timing.align_pad)
-        self.tree_pixel.GetEntry(self.run_timing.align_pixel)
-
-        self.initial_t_pad = getattr(self.tree_pad, self.branch_names["t_pad"])
-        self.initial_t_pixel = getattr(self.tree_pixel, self.branch_names["t_pixel"])
 
     def initialize_analysis(self):
         RunInfo.load('runs.json')
@@ -276,13 +228,7 @@ class TimingAlignment:
             raise Exception('cannot find run {run} in RunInfo json - Please add run first'.format(run=self.run))
         this_info = RunInfo.runs[self.run]
         print this_info
-        self.run_timing = RunTiming(self.run,
-                                    this_info.time_offset,
-                                    this_info.time_drift,
-                                    this_info.align_ev_pixel,
-                                    this_info.align_ev_pad,
-                                    this_info.diamond,
-                                    this_info.bias_voltage)
+        self.run_timing = this_info
         this_mask = this_info.get_mask()
         self.diamond = Diamond(this_mask.diamond, this_mask.min_x, this_mask.max_x, this_mask.min_y, this_mask.max_y)
         self.set_branches()
@@ -329,15 +275,16 @@ class TimingAlignment:
         for x_pos in range(n_boxes):
             tmp_li = []
             for y_pos in range(n_boxes):
+                name = 'integral_box_{0}_{1}'.format(x_pos, y_pos)
                 if self.run_timing.bias_voltage > 0:
-                    tmp_li.append(ROOT.TH1D("", "", 200, -500, 200))
+                    tmp_li.append(ROOT.TH1D(name, "", 200, -500, 200))
                 else:
-                    tmp_li.append(ROOT.TH1D("", "", 200, -200, 500))
+                    tmp_li.append(ROOT.TH1D(name, "", 200, -200, 500))
             # End of x-loop
             integral_box_matrix.append(tmp_li)
         self.histos['integral_box_matrix'] = integral_box_matrix
 
-    def find_associated_pixel_event(self, i_pixel, time_pad,offset = 0):
+    def find_associated_pixel_event(self, i_pixel, time_pad, offset=0):
         """ Find the for a given pad time the pixel events which fits best timing wise in an
             range around a given pixel position
 
@@ -358,11 +305,13 @@ class TimingAlignment:
                                                        self.initial_t_pixel,
                                                        time_pad,
                                                        self.initial_t_pad,
-                                                       self.run_timing.offset,
-                                                       self.run_timing.slope,
-                                                       i_pixel_test==0 and i_pixel == 0)
+                                                       self.run_timing.time_offset,
+                                                       self.run_timing.time_drift,
+                                                       i_pixel_test == 0 and i_pixel == 0)
             delta_t = time_pixel_in_pad - time_pad
-            delta_ts.append([i_pixel_test, delta_t])
+            delta_ts.append([i_pixel_test, delta_t, time_pixel_in_pad])
+        # print delta_ts
+        # raw_input()
         best_match = sorted(delta_ts, key=lambda x: abs(x[1]))[0]
         return best_match
 
@@ -378,13 +327,8 @@ class TimingAlignment:
 
         this_info = RunInfo.runs[self.run]
 
-        self.run_timing = RunTiming(self.run,
-                                    this_info.time_offset,
-                                    this_info.time_drift,
-                                    this_info.align_ev_pixel,
-                                    this_info.align_ev_pad,
-                                    this_info.diamond,
-                                    this_info.bias_voltage)
+        self.run_timing = this_info
+
         # We are going to select the alignment event with the lowest residual RMS
         # Make a list of triples: [pixel_event, pad_event, residual RMS]
         self.init_input_trees()
@@ -399,9 +343,9 @@ class TimingAlignment:
         ensure_dir("{0}/aligning/".format(self.result_dir))
         self.search_width_pixel = 10
         # Loop over potential pad events for aligning:
-        for i_align_pad in xrange(max_align_pad):
+        for i_align_pad in xrange(1, max_align_pad):
 
-            self.tree_pad.GetEntry(i_align_pad)
+            self.tree_pad.GetEntry(i_align_pad-1)
             self.initial_t_pad = getattr(self.tree_pad, self.branch_names["t_pad"])
 
             # Loop over potential pixel events for aligning:
@@ -413,12 +357,11 @@ class TimingAlignment:
                 self.histos[name] = ROOT.TH1F(name, "", 1600, -0.04, 0.04)
                 i_pixel = 0
 
-                for i_pad in xrange(0, n_events):
-
-                    self.tree_pad.GetEntry(i_pad)
+                for i_pad in xrange(1, n_events):
+                    self.tree_pad.GetEntry(i_pad-1)
                     time_pad = getattr(self.tree_pad, self.branch_names["t_pad"])
 
-                    best_match = self.find_associated_pixel_event(i_pixel, time_pad,1)
+                    best_match = self.find_associated_pixel_event(i_pixel, time_pad, 1)
                     self.histos[name].Fill(best_match[1])
 
                     # Set the starting-value for the next iteration
@@ -429,10 +372,12 @@ class TimingAlignment:
                 self.histos[name].Draw()
                 c.Print(
                     os.path.abspath(
-                        "{0}/aligning/ipad_{1:02d}_ipixel_{2:02d}.pdf".format(self.result_dir, i_align_pad, i_align_pixel)))
+                        "{0}/aligning/ipad_{1:02d}_ipixel_{2:02d}.pdf".format(self.result_dir, i_align_pad,
+                                                                              i_align_pixel)))
                 c.Print(
                     os.path.abspath(
-                        "{0}/aligning/ipad_{1:02d}_ipixel_{2:02d}.png".format(self.result_dir, i_align_pad, i_align_pixel)))
+                        "{0}/aligning/ipad_{1:02d}_ipixel_{2:02d}.png".format(self.result_dir, i_align_pad,
+                                                                              i_align_pixel)))
 
                 print "Pad Event {0} / Pixel Event {1}: Mean: {2:2.6f} RMS:{3:2.6f}".format(i_align_pad,
                                                                                             i_align_pixel,
@@ -441,17 +386,18 @@ class TimingAlignment:
 
                 # Make sure we have enough events actually in the histogram
                 if self.histos[name].Integral() > 900:
-                    li_residuals_rms.append([i_align_pixel, i_align_pad, self.histos[name].GetRMS(),self.histos[name].GetMean()])
+                    li_residuals_rms.append(
+                        [i_align_pixel, i_align_pad, self.histos[name].GetRMS(), self.histos[name].GetMean()])
                     # if we found a good match we can stop
                     if self.histos[name].GetRMS() < good_match_threshold:
                         found_good_match = True
                         # break
 
-            # End of loop over pixel alignment events
+                        # End of loop over pixel alignment events
 
-            # if found_good_match:
-            #     break
-                # End of loop over pad alignment events
+                        # if found_good_match:
+                        #     break
+                        # End of loop over pad alignment events
         if li_residuals_rms == 0:
             raise Exception('did not find any candidate')
         best_i_align_pixel = sorted(li_residuals_rms, key=lambda x: abs(x[index_rms]))[0][index_pixel]
@@ -460,29 +406,28 @@ class TimingAlignment:
         print sorted(li_residuals_rms, key=lambda x: abs(x[index_rms]))
 
         print "Best pad / pixel event for alignment: ", best_i_align_pad, best_i_align_pixel
-        self.run_timing.align_pixel = best_i_align_pixel
-        self.run_timing.align_pad = best_i_align_pad
+        self.run_timing.align_ev_pixel = best_i_align_pixel
+        self.run_timing.align_ev_pad = best_i_align_pad
         self.run_timing.print_info()
         if self.write_json:
             RunInfo.update_run_info(self.run_timing)
         pass
 
     def loop(self):
-        i_pixel = 0
+        i_pixel = self.run_timing.align_ev_pixel
         bar = None
         if progressbar_loaded:
             widgets = [progressbar.Bar('=', ' [', ']'), ' ', progressbar.Percentage()]
             # bar = progressbar.ProgressBar("Analyzed Events:",maxval=max_events, widgets=widgets).start()
             bar = progressbar.ProgressBar(maxval=self.max_events, widgets=widgets, term_width=50).start()
-        for i_pad in xrange(self.max_events):
 
+        for i_pad in xrange(self.run_timing.align_ev_pad,self.max_events):
             if bar:
                 bar.update(i_pad)
             else:
-                if i_pad % 1000 == 0:
-                    print "{0} / {1}".format(i_pad, self.max_events)
+                if i_pad % 1000 == 0: print "{0} / {1}".format(i_pad, self.max_events)
 
-            self.tree_pad.GetEntry(i_pad)
+            self.tree_pad.GetEntry(i_pad-1)
             time_pad = getattr(self.tree_pad, self.branch_names["t_pad"])
 
             best_match = self.find_associated_pixel_event(i_pixel, time_pad)
@@ -490,29 +435,41 @@ class TimingAlignment:
             i_pixel = best_match[0]
             self.tree_pixel.GetEntry(i_pixel)
 
+            # Check if we are happy with the timing
+            # (residual below 1 ms)
+            is_correctly_matched = abs(best_match[1]) < 0.001
+            calib_flag = getattr(self.tree_pad, self.branch_names["calib_flag_pad"])
+            integral50 = getattr(self.tree_pad, self.branch_names["integral_50_pad"])
+            time_pixel_in_pad = best_match[2]
+
+            if is_correctly_matched:
+                self.out_branches["accepted"][0] = 1
+            hit_plane_bits = getattr(self.tree_pixel, self.branch_names["plane_bits_pixel"])
+            track_x = getattr(self.tree_pixel, self.branch_names["track_x"])
+            track_y = getattr(self.tree_pixel, self.branch_names["track_y"])
+            self.out_branches['n_matched_pixel'][0] = i_pixel
+            #     # print i_pixel
+            # else:
+            #     hit_plane_bits = -1
+            #     track_x = -999
+            #     track_y = -999
+            #     self.out_branches["accepted"][0] = 0
+            #     self.out_branches['n_matched_pixel'][0] = -1
+
+            self.out_branches["n_pad"][0] = getattr(self.tree_pad, self.branch_names["n_pad"])
+            self.out_branches["t_pad"][0] = time_pad
+            self.out_branches["t_pixel"][0] = time_pixel_in_pad
+            self.out_branches["track_x"][0] = track_x
+            self.out_branches["track_y"][0] = track_y
+            self.out_branches["integral50"][0] = integral50
+            self.out_branches["calib_flag"][0] = calib_flag
+            self.out_branches["hit_plane_bits"][0] = hit_plane_bits
+            self.tree_out.Fill()
             self.histos['h_delta_n'].Fill(best_match[0] - i_pixel + 1)
             self.histos['h'].Fill(best_match[1])
             self.histos['h2'].Fill(time_pad - self.initial_t_pad, best_match[1])
 
-            # Check if we are happy with the timing
-            # (residual below 1 ms)
-            if abs(best_match[1]) < 0.001:
-                hit_plane_bits = getattr(self.tree_pixel, self.branch_names["plane_bits_pixel"])
-                calib_flag = getattr(self.tree_pad, self.branch_names["calib_flag_pad"])
-                track_x = getattr(self.tree_pixel, self.branch_names["track_x"])
-                track_y = getattr(self.tree_pixel, self.branch_names["track_y"])
-                integral50 = getattr(self.tree_pad, self.branch_names["integral_50_pad"])
-
-                self.out_branches["n_pad"][0] = getattr(self.tree_pad, self.branch_names["n_pad"])
-                self.out_branches["t_pad"][0] = time_pad
-                self.out_branches["accepted"][0] = 1
-                self.out_branches["track_x"][0] = track_x
-                self.out_branches["track_y"][0] = track_y
-                self.out_branches["integral50"][0] = integral50
-                self.out_branches["calib_flag"][0] = calib_flag
-                self.out_branches["hit_plane_bits"][0] = hit_plane_bits
-                self.tree_out.Fill()
-
+            if is_correctly_matched:
                 self.histos['h_calib_events'].Fill(hit_plane_bits, calib_flag)
                 self.histos['h_tracks'].Fill(track_x, track_y)
                 self.histos['h_tracks_zoom'].Fill(track_x, track_y)
@@ -526,11 +483,11 @@ class TimingAlignment:
                                         self.diamond.y_pos_min,
                                         self.diamond.y_pos_max,
                                         n_boxes)
-
                 if ret != -1:
                     x_box = ret[0]
                     y_box = ret[1]
                     self.histos['integral_box_matrix'][x_box][y_box].Fill(integral50)
+
 
     def save_histograms(self):
         c = ROOT.TCanvas()
@@ -550,8 +507,8 @@ class TimingAlignment:
         c.Print("{0}/time{1}.png".format(self.result_dir, self.appendix))
         c.Print("{0}/time{1}.root".format(self.result_dir, self.appendix))
 
-        self.run_timing.offset -= fun.GetParameter(0)
-        self.run_timing.slope -= fun.GetParameter(1)
+        self.run_timing.time_offset -= fun.GetParameter(0)
+        self.run_timing.time_drift -= fun.GetParameter(1)
 
         c.SetLogy(1)
         self.histos['h_delta_n'].Draw()
@@ -641,20 +598,24 @@ class TimingAlignment:
                                                                               self.appendix))
         self.f_out.Write()
         total_calib_events = 0
-        for i in range(1,17):
-            total_calib_events += int(self.histos['h_calib_events'].GetBinContent(i,2))
-        calibEventsNoHit = int(self.histos['h_calib_events'].GetBinContent(1,2))
-        calibEventsFullHit = int(self.histos['h_calib_events'].GetBinContent(16,2))
+        for i in range(1, 17):
+            total_calib_events += int(self.histos['h_calib_events'].GetBinContent(i, 2))
+        calibEventsNoHit = int(self.histos['h_calib_events'].GetBinContent(1, 2))
+        calibEventsFullHit = int(self.histos['h_calib_events'].GetBinContent(16, 2))
 
         print 'There are \n\t  {:6d} calibration events ' \
               'from which\n\t' \
               '- {:6d} have Pixel Bit  0 [no Hit]\n\t' \
               '- {:6d} have Pixel Bit 15 [all Hit]'.format(total_calib_events,
-                                                                     calibEventsNoHit,
-                                                                     calibEventsFullHit)
-        if total_calib_events >0:
-            fraction = float(calibEventsNoHit)/float(total_calib_events)*100.
-            print 'The fraction of correctly assign events is {:6.2f}% '.format(fraction)
+                                                           calibEventsNoHit,
+                                                           calibEventsFullHit)
+        if total_calib_events > 0:
+            fraction = float(calibEventsNoHit) / float(total_calib_events) * 100.
+        else:
+            fraction = -2
+        print 'The fraction of correctly assign events is {:6.2f}% '.format(fraction)
+        self.run_timing.calibration_event_fraction = fraction
+
 
 
     def analyse(self):
