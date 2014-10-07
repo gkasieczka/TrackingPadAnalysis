@@ -50,8 +50,11 @@ while True:
                  "pedestal_run"]            
 
     dic = {}
-    
-    for argument_name in arguments:
+
+
+    i = 0
+    while i < len(arguments):
+        argument_name = arguments[i]
 
         last_argument = getattr(last_run, argument_name)
         argument_type = type(last_argument)
@@ -67,18 +70,22 @@ while True:
 
         response = raw_input()
 
-        if response == "":
-            result = last_argument
-        elif response == "reset":
-            break
+        if response == "reset":
+            continue
         elif response == "exit":
             sys.exit()
+        elif response == 'back':
+            if i > 0:
+                i -= 1
         else:
-            result = argument_type(response)
+            i += 1
+            if response == "":
+                result = last_argument
+            else:
+                result = argument_type(response)
             
-        print "Using: ", result
-
-        dic[argument_name] = result
+            print "Using: ", result
+            dic[argument_name] = result
     # End of loop over arguments
 
     # If we have a response for each parameter (did not break)
