@@ -57,6 +57,10 @@ while True:
         argument_name = arguments[i]
 
         last_argument = getattr(last_run, argument_name)
+        if argument_name == 'number':
+            last_argument += 1
+        if argument_name == 'pedestal_run' and dic.get('data_type',0) == 1:
+            last_argument = dic['number']
         argument_type = type(last_argument)
 
         print "\nEnter {0}: (default = {1}). (or type reset or exit)".format(argument_name, last_argument)
@@ -71,7 +75,7 @@ while True:
         response = raw_input()
 
         if response == "reset":
-            continue
+            i = 0
         elif response == "exit":
             sys.exit()
         elif response == 'back':
