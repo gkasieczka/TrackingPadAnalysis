@@ -35,6 +35,8 @@ class MaskInfo:
                     bias_sign,
                     data_type,
                     mask_time):
+        if data_type != 0 and data_type != 1:
+            data_type = 0
         key = "{0}-{1}-{2}-{3}".format(diamond, bias_sign, data_types[data_type], str(mask_time))
         return key
 
