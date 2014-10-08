@@ -328,7 +328,8 @@ class TimingAlignment:
             raise Exception('cannot find run {run} in RunInfo json - Please add run first'.format(run=self.run))
 
         this_info = RunInfo.runs[self.run]
-
+        this_mask = this_info.get_mask()
+        self.mask = this_mask
         self.run_timing = this_info
 
         # We are going to select the alignment event with the lowest residual RMS
