@@ -322,7 +322,7 @@ class TimingAlignment:
         RunInfo.load('runs.json')
 
         max_align_pad = 10
-        max_align_pixel = 40
+        max_align_pixel = 80
 
         if self.run not in RunInfo.runs:
             raise Exception('cannot find run {run} in RunInfo json - Please add run first'.format(run=self.run))
@@ -346,12 +346,21 @@ class TimingAlignment:
         self.search_width_pixel = 10
         # Loop over potential pad events for aligning:
         for i_align_pad in xrange(1, max_align_pad):
-
+            if i_align_pad == 1 and len(li_residuals_rms) == 0:
+                max_align_pixel = 80
+            elif found_good_match:
+                max_align_pixel = 20
+            else:
+                max_align_pixel = 40
             self.tree_pad.GetEntry(i_align_pad-1)
             self.initial_t_pad = getattr(self.tree_pad, self.branch_names["t_pad"])
 
             # Loop over potential pixel events for aligning:
             for i_align_pixel in xrange(max_align_pixel):
+                if found_good_match and i_align_pixel >= 20:
+                    break
+                elif len(li_residuals_rms) and i_align_pixel >= 40:
+                    break
 
                 self.tree_pixel.GetEntry(i_align_pixel)
                 self.initial_t_pixel = getattr(self.tree_pixel, self.branch_names["t_pixel"])
@@ -377,10 +386,13 @@ class TimingAlignment:
                 c.Print(os.path.abspath(fname+".pdf"))
                 c.Print(os.path.abspath(fname+".png"))
 
-                print "Pad Event {0} / Pixel Event {1}: Mean: {2:2.6f} RMS:{3:2.6f}".format(i_align_pad,
+                print "Pad Event {0:2d} / Pixel Event {1:2d}: Mean: {2:+2.6f} RMS:{3:+2.6f} Integral: {4:4.0f} | {5:3.0f} {6:3.0f}".format(i_align_pad,
                                                                                             i_align_pixel,
                                                                                             self.histos[name].GetMean(),
-                                                                                            self.histos[name].GetRMS())
+                                                                                            self.histos[name].GetRMS(),
+                                                                                            self.histos[name].Integral(),
+                                                                                            self.histos[name].GetBinContent(0),
+                                                                                            self.histos[name].GetBinContent(self.histos[name].GetNbinsX()+1))
 
                 # Make sure we have enough events actually in the histogram
                 if self.histos[name].Integral() > 900:
@@ -389,6 +401,8 @@ class TimingAlignment:
                     # if we found a good match we can stop
                     if self.histos[name].GetRMS() < good_match_threshold:
                         found_good_match = True
+                        if not found_good_match:
+                            print 'found good match'
                         # break
 
                         # End of loop over pixel alignment events
@@ -396,12 +410,13 @@ class TimingAlignment:
                         # if found_good_match:
                         #     break
                         # End of loop over pad alignment events
-        if li_residuals_rms == 0:
+        if len(li_residuals_rms) == 0:
             raise Exception('did not find any candidate')
+
+        print sorted(li_residuals_rms, key=lambda x: abs(x[index_rms]))
         best_i_align_pixel = sorted(li_residuals_rms, key=lambda x: abs(x[index_rms]))[0][index_pixel]
         best_i_align_pad = sorted(li_residuals_rms, key=lambda x: abs(x[index_rms]))[0][index_pad]
 
-        print sorted(li_residuals_rms, key=lambda x: abs(x[index_rms]))
 
         print "Best pad / pixel event for alignment: ", best_i_align_pad, best_i_align_pixel
         self.run_timing.align_ev_pixel = best_i_align_pixel
@@ -611,7 +626,7 @@ class TimingAlignment:
             fraction = float(calibEventsNoHit) / float(total_calib_events) * 100.
         else:
             fraction = -2
-        print 'The fraction of correctly assign events is {:6.2f}% '.format(fraction)
+        print 'Run {:3d}: The fraction of correctly assign events is {:6.2f}% '.format(self.run,fraction)
         self.run_timing.calibration_event_fraction = fraction
 
 
