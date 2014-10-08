@@ -21,4 +21,4 @@ print 'these are the unanalyzed pedestal runs:'
 print ped_not
 
 for run in ped_not:
-    call('echo python Analyze.py '+str(run), shell=True)
+    call('python Analyze.py '+str(run), shell=True)
