@@ -71,9 +71,9 @@ class RunInfo:
         assert (type(number) is t.IntType and 0 < number < 1000), "Invalid run number"
         assert (type(begin_date) is t.StringType or type(begin_date) is t.UnicodeType ), "Invalid begin_date"
         assert (type(begin_time) is t.IntType and (
-        0 < begin_time and begin_time / 100 < 24 and begin_time % 100 < 60) or begin_time == -1), "Invalid begin_time"
+        0 <= begin_time and begin_time / 100 < 24 and begin_time % 100 < 60) or begin_time == -1), "Invalid begin_time"
         assert (type(end_time) is t.IntType and (
-        0 < end_time and end_time / 100 < 24 and end_time % 100 < 60) or end_time == -1), "Invalid end_time"
+        0 <= end_time and end_time / 100 < 24 and end_time % 100 < 60) or end_time == -1), "Invalid end_time"
         assert (type(diamond) is t.StringType or type(diamond) is t.UnicodeType), "Invalid diamond"
         assert (data_type in data_types.keys()), "Invalid data_type"
         assert (type(bias_voltage) is t.IntType and -2000 < bias_voltage < 2000)
