@@ -128,6 +128,8 @@ class TimingAlignment:
         self.tree_out = None
         ensure_dir(self.result_dir)
         self.write_json = True
+        ROOT.gROOT.SetBatch()
+        ROOT.gErrorIgnoreLevel = 2001
         pass
 
     @staticmethod
@@ -370,14 +372,10 @@ class TimingAlignment:
                     # End of loop over pad events
 
                 self.histos[name].Draw()
-                c.Print(
-                    os.path.abspath(
-                        "{0}/aligning/ipad_{1:02d}_ipixel_{2:02d}.pdf".format(self.result_dir, i_align_pad,
-                                                                              i_align_pixel)))
-                c.Print(
-                    os.path.abspath(
-                        "{0}/aligning/ipad_{1:02d}_ipixel_{2:02d}.png".format(self.result_dir, i_align_pad,
-                                                                              i_align_pixel)))
+                fname = "{0}/aligning/ipad_{1:02d}_ipixel_{2:02d}.".format(self.result_dir, i_align_pad,
+                                                                              i_align_pixel)
+                c.Print(os.path.abspath(fname+".pdf"))
+                c.Print(os.path.abspath(fname+".png"))
 
                 print "Pad Event {0} / Pixel Event {1}: Mean: {2:2.6f} RMS:{3:2.6f}".format(i_align_pad,
                                                                                             i_align_pixel,
