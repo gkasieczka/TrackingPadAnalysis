@@ -3782,12 +3782,12 @@
         "time_timing_alignment": 1412947905
     }, 
     "612": {
-        "align_ev_pad": -1, 
-        "align_ev_pixel": -1, 
+        "align_ev_pad": 6, 
+        "align_ev_pixel": 5, 
         "begin_date": "2014-09-27", 
         "begin_time": 1029, 
         "bias_voltage": 300, 
-        "calibration_event_fraction": -1.0, 
+        "calibration_event_fraction": 99.51573849878935, 
         "comment": "", 
         "data_type": 2, 
         "diamond": "IIa-5", 
@@ -3806,11 +3806,11 @@
         "rate_trigger": 220, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": -1.9e-06, 
-        "time_offset": 0.0, 
-        "time_pad_data": -1, 
-        "time_pixel_data": -1, 
-        "time_timing_alignment": -1
+        "time_drift": 1.8463213713249588e-06, 
+        "time_offset": -3.8467465132062826e-05, 
+        "time_pad_data": 1412259883, 
+        "time_pixel_data": 1412322894, 
+        "time_timing_alignment": 1412948046
     }, 
     "614": {
         "align_ev_pad": -1, 
