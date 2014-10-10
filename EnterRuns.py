@@ -63,7 +63,7 @@ while True:
             last_argument = dic['number']
         argument_type = type(last_argument)
 
-        print "\nEnter {0}: (default = {1}). (or type reset or exit)".format(argument_name, last_argument)
+        print "\nEnter {0}: (default = {1}). (or type back, reset or exit)".format(argument_name, last_argument)
         if argument_name == "data_type":
             for k in sorted(data_types.keys()):
                 print "{0}: {1}".format(k, data_types[k])
@@ -99,7 +99,7 @@ while True:
         r = RunInfo(**dic)
 
         # Overwrite the run-list file
-        RunInfo.dump(runs_filename)
+        RunInfo.update_run_info(r)
         
         print "Created run {0} and updated {1}".format(r.number, runs_filename)
         
