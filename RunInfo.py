@@ -15,6 +15,7 @@ import types as t
 from Initializer import initializer
 from MaskInfo import MaskInfo
 from DataTypes import data_types
+import os
 
 
 def signum(x):
@@ -65,7 +66,13 @@ class RunInfo:
                  align_ev_pad=-1,  # [int] pad event for time align
                  time_offset=0.,  # float (seconds)
                  time_drift=-1.9e-6,  # drift between pixel and pad clock
-                 calibration_event_fraction=-1.): # fraction of correctly matched calibration events
+                 calibration_event_fraction=-1.,
+                 time_pad_data=-1,
+                 time_pixel_data=-1,
+                 time_timing_alignment=-1,
+                 time_analyse=-1
+
+                 ): # fraction of correctly matched calibration events
 
         # Validate
         assert (type(number) is t.IntType and 0 < number < 1000), "Invalid run number"
@@ -164,3 +171,8 @@ class RunInfo:
 
 # End of class RunInfo
 
+if __name__ == "__main__":
+    fname = "runs.json"
+    if os.path.isfile(fname):
+        print 'Load RunInfo: ', fname
+        RunInfo.load(fname)
