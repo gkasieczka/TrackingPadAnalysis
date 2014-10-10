@@ -7,6 +7,7 @@ import sys
 import array
 import math
 from RunInfo import RunInfo
+import time
 
 try:
     import progressbar
@@ -109,7 +110,7 @@ class Diamond:
 # Class: TimingAlignment
 ###############################
 class TimingAlignment:
-    def __init__(self, run, tree_pixel, tree_pad, branch_names):
+    def __init__(self, run, f_pixel, f_pad, branch_names):
         self.run = run
         self.action = 0
         self.output_dir = "./results"
@@ -119,6 +120,13 @@ class TimingAlignment:
         self.f_out = None
         self.out_branches = {}
         self.max_events = -1
+        self.f_pad = f_pad
+        self.f_pixel = f_pixel
+        tree_pad = f_pad.Get("rec")
+        tree_pixel = f_pixel.Get("time_tree")
+        print "Read:"
+        print "PAD Tree: ", tree_pad.GetEntries(), "entries"
+        print "Pixel Tree: ", tree_pixel.GetEntries(), "entries"
         self.tree_pad = tree_pad
         self.tree_pixel = tree_pixel
         self.branch_names = branch_names
@@ -126,6 +134,7 @@ class TimingAlignment:
         self.search_width_pixel = 6
         self.result_dir = "{0}/run_{1}/".format(self.output_dir, self.run)
         self.tree_out = None
+        self.class_time = time.time()
         ensure_dir(self.result_dir)
         self.write_json = True
         ROOT.gROOT.SetBatch()
@@ -202,6 +211,9 @@ class TimingAlignment:
 
         self.out_branches["calib_flag"] = array.array('i', [0])
         self.tree_out.Branch('calib_flag', self.out_branches["calib_flag"], 'calib_flag/I')
+
+        self.out_branches["delta_pixel"] = array.array('i', [0])
+        self.tree_out.Branch('delta_pixel', self.out_branches["delta_pixel"], 'delta_pixel/I')
 
         self.out_branches["hit_plane_bits"] = array.array('i', [0])
         self.tree_out.Branch('hit_plane_bits', self.out_branches["hit_plane_bits"], 'hit_plane_bits/I')
@@ -445,8 +457,9 @@ class TimingAlignment:
             time_pad = getattr(self.tree_pad, self.branch_names["t_pad"])
 
             best_match = self.find_associated_pixel_event(i_pixel, time_pad)
-
+            delta_pixel = -1* i_pixel
             i_pixel = best_match[0]
+            delta_pixel += i_pixel
             self.tree_pixel.GetEntry(i_pixel)
 
             # Check if we are happy with the timing
@@ -478,6 +491,7 @@ class TimingAlignment:
             self.out_branches["integral50"][0] = integral50
             self.out_branches["calib_flag"][0] = calib_flag
             self.out_branches["hit_plane_bits"][0] = hit_plane_bits
+            self.out_branches['delta_pixel'][0] = delta_pixel
             self.tree_out.Fill()
             self.histos['h_delta_n'].Fill(best_match[0] - i_pixel + 1)
             self.histos['h'].Fill(best_match[1])
@@ -512,7 +526,7 @@ class TimingAlignment:
 
         # print h2, c
         fun = ROOT.TF1("fun", "[0]+[1]*x")
-        self.histos['h2'].Fit(fun, "", "")
+        self.histos['h2'].Fit(fun, "Q", "")
         self.histos['h2'].GetYaxis().SetTitleOffset(1.9)
         self.histos['h2'].GetXaxis().SetTitle("t_{pad} [s]")
         self.histos['h2'].GetYaxis().SetTitle("t_{pixel} - t_{pad} [s]")
@@ -600,7 +614,7 @@ class TimingAlignment:
         for x_pos in range(len(self.histos['integral_box_matrix'])):
             for y_pos in range(len(self.histos['integral_box_matrix'][x_pos])):
                 fun = ROOT.TF1("", "gaus")
-                self.histos['integral_box_matrix'][x_pos][y_pos].Fit(fun)
+                self.histos['integral_box_matrix'][x_pos][y_pos].Fit(fun,"Q")
                 print "XXX X: {0} Y: {1} Mean: {2:2.2f} RMS {3:2.2f}".format(x_pos,
                                                                              y_pos,
                                                                              fun.GetParameter(1),
@@ -626,10 +640,12 @@ class TimingAlignment:
         if total_calib_events > 0:
             fraction = float(calibEventsNoHit) / float(total_calib_events) * 100.
         else:
-            fraction = -2
+            fraction = -2.0
         print 'Run {:3d}: The fraction of correctly assign events is {:6.2f}% '.format(self.run,fraction)
         self.run_timing.calibration_event_fraction = fraction
-
+        self.run_timing.time_pad_data = self.f_pad.GetCreationDate().Convert()
+        self.run_timing.time_pixel_data = self.f_pixel.GetCreationDate().Convert()
+        self.run_timing.time_timing_alignment = int(self.class_time)
 
 
     def analyse(self):

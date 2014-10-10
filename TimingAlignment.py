@@ -165,63 +165,14 @@ if not f_pad:
 if not f_pixel:
     raise Exception('Cannot find Pixel File')
 
-tree_pad = f_pad.Get("rec")
-tree_pixel = f_pixel.Get("time_tree")
-
-print "Read:"
-print "PAD Tree: ", tree_pad.GetEntries(), "entries"
-print "Pixel Tree: ", tree_pixel.GetEntries(), "entries"
 
 
 # ##############################
 # Actual work
 # ##############################
 
-TA = TimingAlignmentClass.TimingAlignment(run, tree_pixel, tree_pad, branch_names)
-if False:  # old code
-    print 'Running old code'
-    if (action == 0) or (action == 1):
-        TaH.print_run_info(run, tree_pixel, tree_pad, branch_names)
-        TaH.analyze(run,
-                    action,
-                    tree_pixel,
-                    tree_pad,
-                    branch_names,
-                    c, args.output)
-
-    elif action == 2:
-        TaH.print_run_info(run, tree_pixel, tree_pad, branch_names)
-        TaH.find_alignment(run,
-                           tree_pixel,
-                           tree_pad,
-                           branch_names,
-                           c, args.output)
-
-    elif action == 3:
-        diamond = args.diamond
-        bias_voltage = args.voltage
-        TaH.RunTiming(run, diamond_name=diamond, bias_voltage=bias_voltage)
-        TaH.find_alignment(run,
-                           tree_pixel,
-                           tree_pad,
-                           branch_names,
-                           c, args.output)
-        TaH.analyze(run,
-                    1,
-                    tree_pixel,
-                    tree_pad,
-                    branch_names,
-                    c, args.output)
-
-        TaH.analyze(run,
-                    0,
-                    tree_pixel,
-                    tree_pad,
-                    branch_names,
-                    c, args.output)
-
-
-else:  # new Code
+TA = TimingAlignmentClass.TimingAlignment(run, f_pixel, f_pad, branch_names)
+if True:
     if (action == 0) or (action == 1):
         # TaH.print_run_info(run, tree_pixel, tree_pad, branch_names)
         TA.set_action(action)
