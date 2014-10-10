@@ -33,7 +33,10 @@ def initializer(func):
         for name, default in zip(reversed(names), reversed(defaults)):
             if not hasattr(self, name):
                 setattr(self, name, default)
-
-        func(self, *args, **kargs)
+        try:
+            func(self, *args, **kargs)
+        except TypeError as e:
+            print args, kargs
+            raise e
 
     return wrapper
