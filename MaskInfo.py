@@ -37,7 +37,7 @@ class MaskInfo:
                     mask_time):
         if data_type != 0 and data_type != 1:
             data_type = 0
-        key = "{0}-{1}-{2}-{3}".format(diamond, bias_sign, data_types[data_type], str(mask_time))
+        key = "{0}-{1}-{2}-{3:04d}".format(diamond, bias_sign, data_types[data_type], mask_time)
         return key
 
     # End of create_name
@@ -113,6 +113,6 @@ if __name__ == "__main__":
         print 'Load MaskInfo: ', fname
         MaskInfo.load(fname)
 
-    MaskInfo(1, "IIa-2", 2518, -1, 65, 79, 1, 50, 1, 50, 1, 50, -0.2, 0.2, 0., 0.4)
+    # MaskInfo(1, "IIa-2", 2518, -1, 65, 79, 1, 50, 1, 50, 1, 50, -0.2, 0.2, 0., 0.4)
     MaskInfo.dump(fname)
     print MaskInfo.masks

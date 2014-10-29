@@ -15,6 +15,7 @@ import types as t
 from Initializer import initializer
 from MaskInfo import MaskInfo
 from DataTypes import data_types
+import portalocker
 import os
 
 
@@ -115,16 +116,21 @@ class RunInfo:
 
     @staticmethod
     def update_run_info(run_timing):
-        run_timing.print_info()
+        # run_timing.print_info()
+        print 'save to json: ',run_timing.number
         RunInfo.load('runs.json')
         RunInfo.runs[run_timing.number] = run_timing
         # RunInfo.update_timing(run_timing.run, run_timing.align_pixel, run_timing.align_pad, run_timing.offset,
         #                       run_timing.slope)
         RunInfo.dump('runs.json')
 
+    def get_mask_key(self):
+        key = MaskInfo.create_name(self.diamond, signum(self.bias_voltage), self.data_type, self.mask_time)
+        return key
+
     def get_mask(self):
         #diamond, bias_sign,MaskInfo.data_types[data_type],str(mask_time))
-        key = MaskInfo.create_name(self.diamond, signum(self.bias_voltage), self.data_type, self.mask_time)
+        key = self.get_mask_key()
         if key in MaskInfo.masks:
             return MaskInfo.masks[key]
         else:
@@ -146,6 +152,8 @@ class RunInfo:
     def dump(cls, filename):
         print 'write new json file'
         f = open(filename, "w")
+        # portalocker.lock(file, portalocker.LOCK_EX)
+        # portalocker.lock(file, portalocker.LOCK_SH)
         f.write(json.dumps(cls.runs,
                            default=lambda o: o.__dict__,
                            sort_keys=True,
@@ -157,7 +165,6 @@ class RunInfo:
     # Read all RunInfos from a file and use to intialize objects
     @classmethod
     def load(cls, filename):
-
         # first get the dictionary from the file..
         f = open(filename, "r")
         data = json.load(f)
