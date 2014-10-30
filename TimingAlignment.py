@@ -16,7 +16,6 @@ import argparse
 import ROOT
 
 import TimingAlignmentClass
-import TimingAlignmentHelpers as TaH
 
 # ##############################
 # Configuration
@@ -57,66 +56,6 @@ ROOT.gROOT.ForceStyle()
 c = ROOT.TCanvas("", "", 800, 800)
 
 print "Going to process run {0} with action = {1}".format(run, action)
-
-
-# ##############################
-# Diamonds
-# ##############################
-# from maskinfo import maskinfo
-# maskinfo.load(maskinfo.json)
-# maskinfo.masks
-# TAH.SetMask(masks)
-TaH.Diamond("dummy", -1., 1., -1., 1.)
-TaH.Diamond("IIa-2", -0.2, 0.2, 0., 0.4)
-TaH.Diamond("IIa-3", -0.25, 0.15, -0.05, 0.35)
-TaH.Diamond("IIa-3-wide-open", -0.5, 0.5, -0.25, 0.65)
-TaH.Diamond("IIa-5-pedestal", -0.4, 0.4, 0.4, 0.6)
-TaH.Diamond("2A87-E", -0.2, 0.1, -.05, 0.3)
-
-
-# ##############################
-# Run Timing Info
-# ##############################
-
-TaH.RunTiming(6, 0.0003045, 2.155918e-06, 0, 0)
-TaH.RunTiming(12, -0.00030472, 1.955999e-06, 0, 0)
-TaH.RunTiming(38, 0.00052454, 1.9e-06, 4, 0)
-TaH.RunTiming(63, -0.00030911, 1.837389e-06, 0, 0)
-TaH.RunTiming(65, 0.00034346, 1.864050e-06, 0, 0)
-TaH.RunTiming(68, -0.00085284, 2.026819e-06, 6, 0)
-TaH.RunTiming(70, -0.00028498, 1.910828e-06, 6, 0)
-TaH.RunTiming(109, 0.000323963498273, 1.81841520034e-06, 15, 1)
-TaH.RunTiming(131, -0.000191132147971, 1.93697727798e-06, 13, 2)
-TaH.RunTiming(134, -3.1728796239e-05, 1.64755689822e-06, 14, 0)
-
-# IIa-2, positive voltage
-TaH.RunTiming(354, 0, 1.66190809094e-06, 7, 0, "IIa-2")
-TaH.RunTiming(355, -0.000314315985828, 1.66190809094e-06, 2, 1, "IIa-2", 500)
-TaH.RunTiming(356, -0.000695592438193, 1.61339888272e-06, 7, 0, "IIa-2", 500)
-TaH.RunTiming(358, 0.000249032875294, 1.61704852897e-06, 12, 1, "IIa-2", 500)
-TaH.RunTiming(360, -0.000185791051023, 1.59938328397e-06, 5, 1, "IIa-2", 500)
-TaH.RunTiming(362, 0.00042190730171, 1.64763938056e-06, 1, 1, "IIa-2", 500)
-
-# IIa-3, positive voltage
-TaH.RunTiming(457, 1.81812073529e-05, 1.57043424908e-06, 0, 0, "IIa-3", 1000)
-TaH.RunTiming(463, 0.000150546696306, 1.66309765368e-06, 1, 1, "IIa-3", 500)
-# RunTiming(467, -0.000353750981164, 1.60187924305e-06, 10, 1, "IIa-3", 500)
-
-# IIa-3, negative voltage
-TaH.RunTiming(528, -0.000415933095508, 1.60475855132e-06, 6, 1, "IIa-3", -25)
-# TAH.RunTiming(532, -5.38246743255e-05, 1.97836071279e-06, 14, 1, "IIa-3", -50)
-TaH.RunTiming(534, -0.00016191126604, 1.64201756052e-06, 0, 0, "IIa-3", -75)
-TaH.RunTiming(546, 1.52929003315e-05, 1.69038314973e-06, 0, 0, "IIa-3", -500)
-TaH.RunTiming(558, 0.000554312131921, 1.75928791575e-06, 0, 0, "IIa-3", -500)
-TaH.RunTiming(565, 0.000486774113148, 1.69386102118e-06, 13, 1, "IIa-3-wide-open", -1000)
-TaH.RunTiming(566, -9.5862348191e-05, 1.64943513686e-06, 16, 1, "IIa-3", -1000)
-TaH.RunTiming(568, 0.000443434862615, 1.57788860683e-06, 11, 1, "IIa-3-wide-open", -1000)
-TaH.RunTiming(630, 0.00028963428651, 1.70790800374e-06, 0, 0, "IIa-5-pedestal", 500)
-
-
-# 2A87-E
-# TAH.RunTiming(835, -0.000389567120076, 1.82800169927e-06, 12, 1, "2A87-E", -500)
-TaH.RunTiming(835, -0.000407923105343, 1.78550487335e-06, 12, 1, "2A87-E", -500)
 
 # ##############################
 # Branch names
@@ -161,8 +100,14 @@ filename_pixel = format_pixel.format(basedir_pixel, run)
 f_pad = ROOT.TFile.Open(filename_pad)
 f_pixel = ROOT.TFile.Open(filename_pixel)
 if not f_pad:
+    RunInfo.load('runs.json')
+    RunInfo.runs[run].calibration_event_fraction = -3
+    RunInfo.update_run_info(RunInfo.runs[run])
     raise Exception('Cannot find Pad File')
 if not f_pixel:
+    RunInfo.load('runs.json')
+    RunInfo.runs[run].calibration_event_fraction = -4
+    RunInfo.update_run_info(RunInfo.runs[run])
     raise Exception('Cannot find Pixel File')
 
 

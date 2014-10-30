@@ -340,7 +340,12 @@ class TimingAlignment:
             raise Exception('cannot find run {run} in RunInfo json - Please add run first'.format(run=self.run))
 
         this_info = RunInfo.runs[self.run]
-        this_mask = this_info.get_mask()
+        try:
+            this_mask = this_info.get_mask()
+        except e:
+            this_info.calibration_event_fraction = -5
+            RunInfo.update_run_info(this_info)
+            raise e
         self.mask = this_mask
         self.run_timing = this_info
 
