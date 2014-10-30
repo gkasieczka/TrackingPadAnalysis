@@ -135,26 +135,36 @@ def makeXYPlots(h_3d):
     means  = []
     sigmas = []
     
+    counter = 0
     for xbin in range(1,h_3d.GetNbinsX()+1):
         for ybin in range(1,h_3d.GetNbinsY()+1):
             z_histo = h_3d.ProjectionZ(h_3d.GetName()+'_pz_'+str(xbin)+'_'+str(ybin), xbin, xbin, ybin, ybin)
             if z_histo.Integral() < 100.: 
                 continue
+            counter += 1
+            # if counter > 3: continue
+            print 'counter:', counter
             #print 'at xbin %d and ybin %d' %(xbin, ybin)
             #z_histo.Fit('landau','q')
             fit_res = ah.fitLandauGaus(z_histo)
+            ##### print 'this is the fit result from the ROOFIT fit:', fit_res[1]
+            ##### print ' printValue of the parameter list:', fit_res[1].find('ml')
+            ##### print ' mean  landau', fit_res[1].getRealValue('ml')
+            ##### print ' sigma landau', fit_res[1].getRealValue('sl')
     
             ## get the mean and MPV of the landau for all the bins with non-zero integral
             # mpv = z_histo.GetFunction('landau').GetParameter(1) #fit_res[1].GetParameter(1)
     
-            #mpv = fit_res.getRealValue('ml')
-            mpv = fit_res[1][1]
-            mpvs.append(mpv)
-            sig = fit_res[1][2]
-            sigmas.append(sig)
-    
+            mpv = fit_res[1].getRealValue('ml')
+            sig = fit_res[1].getRealValue('sl')
+            #mpv = fit_res[1][1]
+            #sig = fit_res[1][2]
             mean = z_histo.GetMean()
+
+            mpvs.append(mpv)
+            sigmas.append(sig)
             means.append(mean)
+    
             h_2d_mpv  .SetBinContent(xbin, ybin, mpv )
             h_2d_sigma.SetBinContent(xbin, ybin, sig )
             h_2d_mean .SetBinContent(xbin, ybin, mean)
@@ -179,7 +189,8 @@ def makeXYPlots(h_3d):
     
     c1.cd(3)
     ROOT.gPad.SetTicks(1,1)
-    central = ah.mean(mpvs)
+    #central = ah.mean(means)
+    central = abs(mean)
     h_2d_mpv.SetTitle('XY distribution of MPV of PH')
     h_2d_mpv.Draw('colz')
     h_2d_mpv.GetZaxis().SetRangeUser(central-40., central+40.)
@@ -205,9 +216,9 @@ def makeXYPlots(h_3d):
 ## reorganize later
 if __name__ == "__main__":
 
-    if len(sys.argv) != 2:
-        usage()
-        sys.exit(-1)
+    ##  if len(sys.argv) != 2:
+    ##      usage()
+    ##      sys.exit(-1)
 
     ###############################
     # Get all the runs from the json
@@ -217,9 +228,14 @@ if __name__ == "__main__":
 
     
     global my_rn
-    my_rn  = int(sys.argv[-1])
+    ## my_rn  = int(sys.argv[-1])
+    my_rn  = int([i for i in sys.argv if i.isdigit() == True][0]) ## search for the first number in the list of arguments
     my_run = RunInfo.runs[my_rn]
     print my_run.__dict__
+
+    reloadAnyway = False
+    if 'reload' in sys.argv:
+        reloadAnyway = True
 
     ###############################
     # get the correct file for the selected run
@@ -247,8 +263,10 @@ if __name__ == "__main__":
         print 'file already loaded'
     
     ###############################
-    # if the histograms aren't yet there, fill them
+    # if the histograms aren't yet there, fill them. or do it if the user chooses to do so
     ###############################
+    if reloadAnyway:
+        loaded = False
     if not loaded:
 
         print 'loading the histograms into the root file'
@@ -292,7 +310,7 @@ if __name__ == "__main__":
         for ev in my_tree:
             if ev.track_x < -99. and ev.track_y < -99.: ## ommit empty events
                 continue
-            if ev.integral50 == -1.: # these are calibration events
+            if ev.calib_flag: # these are calibration events
                 continue
             rel_time = int( (ev.t_pad - time_first) / time_binning) ## change to t_pad 
         
@@ -331,7 +349,8 @@ if __name__ == "__main__":
             print 'this run still needs a pedestal!'
             ped_run = my_run.pedestal_run
 
-        makeXYPlots(h_3d)
+        ROOT.gROOT.SetBatch()
+        # makeXYPlots(h_3d)
         b = makeTimePlots(h_time_2d)
 
     infile.Close()
