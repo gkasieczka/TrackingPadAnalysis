@@ -12,6 +12,7 @@ Also produce tracking based analysis plots.
 
 import sys
 import argparse
+import ConfigParser
 
 import ROOT
 from RunInfo import RunInfo
@@ -36,6 +37,8 @@ args = parser.parse_args()
 run = args.run
 action = args.action
 
+config = ConfigParser.ConfigParser()
+config.read('TimingAlignment.cfg')
 
 # print 'Run', args.run
 # print 'action', args.action
@@ -88,11 +91,16 @@ branch_names = {
 # Get Trees
 # ##############################
 #
-basedir_pad = "/scratch/PAD-testbeams/PSI_sept_14/pad_out/"
-basedir_pixel = "/scratch/PAD-testbeams/PSI_sept_14/software/DHidasPLT/plots/"
 
-format_pad = "{0}run_2014_09r{1:06d}.root"
-format_pixel = "{0}{1:06d}/histos.root"
+basedir_pad = config.get('INPUT','basedir_pad')
+#"/scratch/PAD-testbeams/PSI_sept_14/pad_out/"
+basedir_pixel = config.get('INPUT','basedir_pixel')
+#"/scratch/PAD-testbeams/PSI_sept_14/software/DHidasPLT/plots/"
+
+format_pad = config.get('INPUT','format_pad')
+#"{0}run_2014_09r{1:06d}.root"
+format_pixel = config.get('INPUT','format_pixel')
+#"{0}{1:06d}/histos.root"
 
 filename_pad = format_pad.format(basedir_pad, run)
 print filename_pad
