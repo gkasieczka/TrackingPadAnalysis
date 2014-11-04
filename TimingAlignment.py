@@ -14,6 +14,7 @@ import sys
 import argparse
 
 import ROOT
+from RunInfo import RunInfo
 
 import TimingAlignmentClass
 
@@ -36,10 +37,10 @@ run = args.run
 action = args.action
 
 
-print 'Run', args.run
-print 'action', args.action
-print 'diamond', args.diamond
-print 'voltage', args.voltage
+# print 'Run', args.run
+# print 'action', args.action
+# print 'diamond', args.diamond
+# print 'voltage', args.voltage
 
 
 # ##############################
@@ -87,8 +88,8 @@ branch_names = {
 # Get Trees
 # ##############################
 #
-basedir_pad = "/scratch/PLT/pad_out/"
-basedir_pixel = "/scratch/PLT/software/DHidasPLT/plots/"
+basedir_pad = "/scratch/PAD-testbeams/PSI_sept_14/pad_out/"
+basedir_pixel = "/scratch/PAD-testbeams/PSI_sept_14/software/DHidasPLT/plots/"
 
 format_pad = "{0}run_2014_09r{1:06d}.root"
 format_pixel = "{0}{1:06d}/histos.root"
@@ -101,13 +102,15 @@ f_pad = ROOT.TFile.Open(filename_pad)
 f_pixel = ROOT.TFile.Open(filename_pixel)
 if not f_pad:
     RunInfo.load('runs.json')
-    RunInfo.runs[run].calibration_event_fraction = -3
-    RunInfo.update_run_info(RunInfo.runs[run])
+    run_info = RunInfo.runs[run]
+    run_info.calibration_event_fraction = -3.0
+    RunInfo.update_run_info(run_info)
     raise Exception('Cannot find Pad File')
 if not f_pixel:
     RunInfo.load('runs.json')
-    RunInfo.runs[run].calibration_event_fraction = -4
-    RunInfo.update_run_info(RunInfo.runs[run])
+    run_info = RunInfo.runs[run]
+    run_info.calibration_event_fraction = -4.0
+    RunInfo.update_run_info(run_info)
     raise Exception('Cannot find Pixel File')
 
 
