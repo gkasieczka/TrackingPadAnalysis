@@ -173,10 +173,17 @@ class TimingAlignment:
         self.f_out = ROOT.TFile(filename_out, "recreate")
 
         # Output Tree
-        self.tree_out = ROOT.TTree("track_info", "track_info")
+        # self.tree_out = ROOT.TTree("track_info", "track_info")
+        self.tree_out = self.tree_pad.CloneTree(0)
+        self.tree_out.SetName('track_info')
+        self.tree_out.SetTitle('track_info')
 
         # Output branches
         self.out_branches = {}
+        for branch in self.tree_pad.GetListOfBranches():
+            print branch,branch.Print()
+
+        raw_input()
 
 
         # Event Number (from pad)
@@ -408,7 +415,7 @@ class TimingAlignment:
                     # End of loop over pad events
 
                 self.histos[name].Draw()
-                fname = "{0}/aligning/ipad_{1:02d}_ipixel_{2:02d}.".format(self.result_dir, i_align_pad,
+                fname = "{0}/aligning/ipad_{1:02d}_ipixel_{2:02d}".format(self.result_dir, i_align_pad,
                                                                               i_align_pixel)
                 c.Print(os.path.abspath(fname+".pdf"))
                 c.Print(os.path.abspath(fname+".png"))
