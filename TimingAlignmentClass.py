@@ -139,6 +139,7 @@ class TimingAlignment:
         self.write_json = True
         ROOT.gROOT.SetBatch()
         ROOT.gErrorIgnoreLevel = 2001
+        self.verbose = False
         pass
 
     @staticmethod
@@ -325,25 +326,33 @@ class TimingAlignment:
             delta_t = time_pixel_in_pad - time_pad
             delta_ts.append([i_pixel_test, delta_t, time_pixel_in_pad])
         # print delta_ts
-        # raw_input()
         best_match = sorted(delta_ts, key=lambda x: abs(x[1]))[0]
         return best_match
 
     def find_first_alignment(self):
         c = ROOT.TCanvas()
         RunInfo.load('runs.json')
-
         max_align_pad = 10
         max_align_pixel = 80
-
         if self.run not in RunInfo.runs:
             raise Exception('cannot find run {run} in RunInfo json - Please add run first'.format(run=self.run))
 
         this_info = RunInfo.runs[self.run]
         try:
             this_mask = this_info.get_mask()
-        except e:
-            this_info.calibration_event_fraction = -5
+        except Exception as e:
+            found = False
+            output = "%s\t%s\n"%(self.run, this_info.get_mask_key())
+            print 'open file, search for ',output
+            with open("missing_masks.txt", "r") as myfile:
+                found = (output in myfile)
+                print 'found: ', found
+
+            if not found:
+                print 'write: ', output
+                with open("missing_masks.txt", "a") as myfile:
+                    myfile.write(output)
+            this_info.calibration_event_fraction = -5.
             RunInfo.update_run_info(this_info)
             raise e
         self.mask = this_mask
@@ -403,8 +412,8 @@ class TimingAlignment:
                                                                               i_align_pixel)
                 c.Print(os.path.abspath(fname+".pdf"))
                 c.Print(os.path.abspath(fname+".png"))
-
-                print "Pad Event {0:2d} / Pixel Event {1:2d}: Mean: {2:+2.6f} RMS:{3:+2.6f} Integral: {4:4.0f} | {5:3.0f} {6:3.0f}".format(i_align_pad,
+                if self.verbose:
+                    print "Pad Event {0:2d} / Pixel Event {1:2d}: Mean: {2:+2.6f} RMS:{3:+2.6f} Integral: {4:4.0f} | {5:3.0f} {6:3.0f}".format(i_align_pad,
                                                                                             i_align_pixel,
                                                                                             self.histos[name].GetMean(),
                                                                                             self.histos[name].GetRMS(),
@@ -429,9 +438,11 @@ class TimingAlignment:
                         #     break
                         # End of loop over pad alignment events
         if len(li_residuals_rms) == 0:
+            self.run_timing.calibration_event_fraction = -6.0
+            RunInfo.update_run_info(self.run_timing)
             raise Exception('did not find any candidate')
-
-        print sorted(li_residuals_rms, key=lambda x: abs(x[index_rms]))
+        if self.verbose:
+            print sorted(li_residuals_rms, key=lambda x: abs(x[index_rms]))
         best_i_align_pixel = sorted(li_residuals_rms, key=lambda x: abs(x[index_rms]))[0][index_pixel]
         best_i_align_pad = sorted(li_residuals_rms, key=lambda x: abs(x[index_rms]))[0][index_pad]
 
@@ -439,7 +450,7 @@ class TimingAlignment:
         print "Best pad / pixel event for alignment: ", best_i_align_pad, best_i_align_pixel
         self.run_timing.align_ev_pixel = best_i_align_pixel
         self.run_timing.align_ev_pad = best_i_align_pad
-        self.run_timing.print_info()
+        # self.run_timing.print_info()
         if self.write_json:
             RunInfo.update_run_info(self.run_timing)
         pass
@@ -620,7 +631,8 @@ class TimingAlignment:
             for y_pos in range(len(self.histos['integral_box_matrix'][x_pos])):
                 fun = ROOT.TF1("", "gaus")
                 self.histos['integral_box_matrix'][x_pos][y_pos].Fit(fun,"Q")
-                print "XXX X: {0} Y: {1} Mean: {2:2.2f} RMS {3:2.2f}".format(x_pos,
+                if self.verbose:
+                    print "XXX X: {0} Y: {1} Mean: {2:2.2f} RMS {3:2.2f}".format(x_pos,
                                                                              y_pos,
                                                                              fun.GetParameter(1),
                                                                              fun.GetParameter(2))
