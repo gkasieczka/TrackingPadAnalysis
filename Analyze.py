@@ -8,7 +8,7 @@ Analysis of the Runs and plot production
 # Imports
 ###############################
 
-import ROOT, copy, sys, math
+import ROOT, copy, sys, math, os
 from RunInfo import RunInfo
 import AnalyzeHelpers as ah
 
@@ -28,6 +28,8 @@ def usage():
 ROOT.gStyle.SetPalette(53)
 ROOT.gStyle.SetNumberContours( 999 )
 
+ROOT.gROOT.SetBatch()
+
 def getPedestalValue(hist):
     tmp_hist = copy.deepcopy(hist.ProjectionY())
     rms = tmp_hist.GetRMS()
@@ -36,9 +38,9 @@ def getPedestalValue(hist):
     tmp_hist.Fit(func,'','',mp-rms/2,mp+rms/2)
     central = func.GetParameter(1)
     c0 = ROOT.TCanvas('foo', 'bar', 600, 600)
-    tmp_hist.Draw('')
-    func.Draw('same')
-    c0.SaveAs('results/run_'+str(my_rn)+'/pedestal.pdf')
+    ## tmp_hist.Draw('')
+    ## func.Draw('same')
+    c0.SaveAs(targetdir+'/pedestal.pdf')
     return central
     
 
@@ -63,7 +65,7 @@ def makeTimePlots(h_time_2d):
     else:
         land.GetXaxis().SetRangeUser(0,250)
     land.Draw()
-    c0.SaveAs('results/run_'+str(my_rn)+'/landau.pdf')
+    c0.SaveAs(targetdir+'/landau.pdf')
 
 
     arr = ROOT.TObjArray()
@@ -96,7 +98,7 @@ def makeTimePlots(h_time_2d):
     h_time_2d.Draw('colz')
     mpvs.Draw('same pe')
 
-    c0.SaveAs('results/run_'+str(my_rn)+'/time_2d.pdf')
+    c0.SaveAs(targetdir+'/time_2d.pdf')
     return arr
 
 
@@ -202,7 +204,7 @@ def makeXYPlots(h_3d):
     h_2d_sigma.Draw('colz')
     h_2d_sigma.GetZaxis().SetRangeUser(0., central+10.)
     
-    c1.SaveAs('results/run_'+str(my_rn)+'/plots.pdf')
+    c1.SaveAs(targetdir+'/xyPlots.pdf')
     # ROOT.gStyle.Reset()
     # reset the style
     ROOT.gStyle.SetTitleSize(tmp_size,'t')
@@ -215,10 +217,6 @@ def makeXYPlots(h_3d):
 
 ## reorganize later
 if __name__ == "__main__":
-
-    ##  if len(sys.argv) != 2:
-    ##      usage()
-    ##      sys.exit(-1)
 
     ###############################
     # Get all the runs from the json
@@ -233,6 +231,14 @@ if __name__ == "__main__":
     my_run = RunInfo.runs[my_rn]
     print my_run.__dict__
 
+    ###############################
+    # check if timing went alright
+    ###############################
+    if my_run.calibration_event_fraction < 0.7:
+        print 'timing didn\'t work. fraction below 70 %. redo the timing.'
+        print 'exiting...'
+        sys.exit(-1)
+    
     reloadAnyway = False
     if 'reload' in sys.argv:
         reloadAnyway = True
@@ -261,25 +267,27 @@ if __name__ == "__main__":
         volt_str = 'pos'+str(voltage)
     else:  
         volt_str = 'neg'+str(-1*voltage)
+
+    # check run type
     if   my_run.data_type == 0:
-        runtype = 'pedestal'
-        prefix  = my_run.diamond+'-run-'str(my_rn)+'-'+volt_str+'pedestal'
-    elif my_run.data_type == 1:
         runtype = 'rate-scan'
-        prefix  = my_run.diamond+'-run-'str(my_rn)+'-'+volt_str+'data'
+        prefix  = my_run.diamond+'-run-'+str(my_rn)+'-'+volt_str+'data'
+    elif my_run.data_type == 1:
+        runtype = 'pedestal'
+        prefix  = my_run.diamond+'-run-'+str(my_rn)+'-'+volt_str+'pedestal'
     elif my_run.data_type == 2: 
         runtype = 'voltage-scan'
-        prefix  = my_run.diamond+'-run-'str(my_rn)+'-'+volt_str+'data'
+        prefix  = my_run.diamond+'-run-'+str(my_rn)+'-'+volt_str+'data'
     elif my_run.data_type == 3:
         runtype = 'long-run'
-        prefix  = my_run.diamond+'-run-'str(my_rn)+'-'+volt_str+'data-long'
-    else
+        prefix  = my_run.diamond+'-run-'+str(my_rn)+'-'+volt_str+'data-long'
+    else:
         runtype = 'other'
-        prefix  = my_run.diamond+'-run-'str(my_rn)+'-'+volt_str+'other'
+        prefix  = my_run.diamond+'-run-'+str(my_rn)+'-'+volt_str+'other'
 
     targetdir = 'results/'+my_run.diamond+'/'+runtype+'/'
     if not os.path.isdir(targetdir):
-        os.mkdir(targetdir)
+        os.makedirs(targetdir)
 
 
     ###############################
@@ -301,6 +309,10 @@ if __name__ == "__main__":
 
         print 'loading the histograms into the root file'
         h_3d = ROOT.TH3F('h_3dfull','3D histogram', 
+             25,   -0.30,   0.20, 
+             25,   -0.10,   0.40, 
+            200, -400.00, 400.00)
+        h_3d_chn2offest = ROOT.TH3F('h_3dfull_chn2offest','3D histogram with chn2 offset', 
              25,   -0.30,   0.20, 
              25,   -0.10,   0.40, 
             200, -400.00, 400.00)
@@ -332,23 +344,39 @@ if __name__ == "__main__":
         length = time_last - time_first
         mins = length/time_binning
 
-        h_time_2d = ROOT.TH2F('h_time_2d', 'h_time_2d', int(mins+1), 0., int(mins+1), 500, -250., 250.)
+        h_time_2d            = ROOT.TH2F('h_time_2d'           , 'h_time_2d'           , int(mins+1), 0., int(mins+1), 500, -250., 250.)
+        h_time_2d_chn2offset = ROOT.TH2F('h_time_2d_chn2offset', 'h_time_2d_chn2offset', int(mins+1), 0., int(mins+1), 500, -250., 250.)
     
         print 'run of %.2f minutes length' %(mins)
         
+        n_wrong_delay = 0
         ## fill the tree data in the histograms
         for ev in my_tree:
+            
             if ev.track_x < -99. and ev.track_y < -99.: ## ommit empty events
                 continue
             if ev.calib_flag: # these are calibration events
                 continue
+               
+            ########################################
+            # check if the delay is correct, if not exit after 10 wrong events
+            if abs(ev.delay_cali-ev.fixed_delay_cali) > 5 or abs(ev.delay_data-ev.fixed_delay_data) > 5:
+                n_wrong_delay += 1
+                if n_wrong_delay > 10:
+                    print 'the delay is screwed up. difference between fixed and event by event is off by 5 in more than 10 events'
+                    print 'exiting...'
+                    sys.exit(-1)
+            ########################################
+
             rel_time = int( (ev.t_pad - time_first) / time_binning) ## change to t_pad 
         
             # fill the 3D histogram
-            h_3d.Fill(ev.track_x, ev.track_y, ev.integral50 - pedestal)
+            h_3d           .Fill(ev.track_x, ev.track_y, ev.integral50 - pedestal)
+            h_3d_chn2offest.Fill(ev.track_x, ev.track_y, ev.integral50 - pedestal - ev.avrg_first_chn2)
         
             # fill all the time histograms with the integral
-            h_time_2d.Fill(rel_time, ev.integral50 - pedestal)
+            h_time_2d           .Fill(rel_time, ev.integral50 - pedestal)
+            h_time_2d_chn2offset.Fill(rel_time, ev.integral50 - pedestal - ev.avrg_first_chn2)
         
         # re-open file for writing
         infile.ReOpen('UPDATE')
