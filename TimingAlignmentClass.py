@@ -180,10 +180,6 @@ class TimingAlignment:
 
         # Output branches
         self.out_branches = {}
-        for branch in self.tree_pad.GetListOfBranches():
-            print branch,branch.Print()
-
-
 
         # Event Number (from pad)
         self.out_branches["n_pad"] = array.array('i', [0])
