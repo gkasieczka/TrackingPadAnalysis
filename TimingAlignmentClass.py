@@ -183,7 +183,6 @@ class TimingAlignment:
         for branch in self.tree_pad.GetListOfBranches():
             print branch,branch.Print()
 
-        raw_input()
 
 
         # Event Number (from pad)
