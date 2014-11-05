@@ -173,11 +173,13 @@ class TimingAlignment:
         self.f_out = ROOT.TFile(filename_out, "recreate")
 
         # Output Tree
-        self.tree_out = ROOT.TTree("track_info", "track_info")
+        # self.tree_out = ROOT.TTree("track_info", "track_info")
+        self.tree_out = self.tree_pad.CloneTree(0)
+        self.tree_out.SetName('track_info')
+        self.tree_out.SetTitle('track_info')
 
         # Output branches
         self.out_branches = {}
-
 
         # Event Number (from pad)
         self.out_branches["n_pad"] = array.array('i', [0])
@@ -199,6 +201,10 @@ class TimingAlignment:
         #   - event matched but no track from pixels
         self.out_branches["accepted"] = array.array('i', [0])
         self.tree_out.Branch('accepted', self.out_branches["accepted"], 'accepted/I')
+
+        # Difference to calibration event
+        self.out_branches["calib_offset"] = array.array('i', [0])
+        self.tree_out.Branch('calib_offset', self.out_branches["calib_offset"], 'calib_offset/I')
 
         # Track interesect with pad
         self.out_branches["track_x"] = array.array('f', [0.])
@@ -408,7 +414,7 @@ class TimingAlignment:
                     # End of loop over pad events
 
                 self.histos[name].Draw()
-                fname = "{0}/aligning/ipad_{1:02d}_ipixel_{2:02d}.".format(self.result_dir, i_align_pad,
+                fname = "{0}/aligning/ipad_{1:02d}_ipixel_{2:02d}".format(self.result_dir, i_align_pad,
                                                                               i_align_pixel)
                 c.Print(os.path.abspath(fname+".pdf"))
                 c.Print(os.path.abspath(fname+".png"))
@@ -473,10 +479,12 @@ class TimingAlignment:
             time_pad = getattr(self.tree_pad, self.branch_names["t_pad"])
 
             best_match = self.find_associated_pixel_event(i_pixel, time_pad)
+            
             delta_pixel = -1* i_pixel
             i_pixel = best_match[0]
             delta_pixel += i_pixel
             self.tree_pixel.GetEntry(i_pixel)
+
 
             # Check if we are happy with the timing
             # (residual below 1 ms)
@@ -484,6 +492,26 @@ class TimingAlignment:
             calib_flag = getattr(self.tree_pad, self.branch_names["calib_flag_pad"])
             integral50 = getattr(self.tree_pad, self.branch_names["integral_50_pad"])
             time_pixel_in_pad = best_match[2]
+
+            # Find offset to closest calibration event
+            calib_offset = -99 # -1 for non-calibration events
+            if calib_flag:                
+                # otherwise scan the closest twenty events
+                li_pixel_calib_events = []
+                for i_offset in range(-10,11):
+                    if 0 <= i_pixel+i_offset < self.tree_pixel.GetEntries():
+                        self.tree_pixel.GetEntry(i_pixel+i_offset)
+                        if getattr(self.tree_pixel, self.branch_names["plane_bits_pixel"])==0:
+                            li_pixel_calib_events.append(i_offset)
+                # select the closest one if there was any
+                if li_pixel_calib_events:
+                    calib_offset = sorted(li_pixel_calib_events, key = lambda x:abs(x))[0]
+                # otherwise set to 99
+                else:
+                    calib_offset = 99
+
+                # go back to the interesting pixel event
+                self.tree_pixel.GetEntry(i_pixel)
 
             if is_correctly_matched:
                 self.out_branches["accepted"][0] = 1
@@ -499,6 +527,7 @@ class TimingAlignment:
             #     self.out_branches["accepted"][0] = 0
             #     self.out_branches['n_matched_pixel'][0] = -1
 
+            self.out_branches["calib_offset"][0] = calib_offset
             self.out_branches["n_pad"][0] = getattr(self.tree_pad, self.branch_names["n_pad"])
             self.out_branches["t_pad"][0] = time_pad
             self.out_branches["t_pixel"][0] = time_pixel_in_pad
