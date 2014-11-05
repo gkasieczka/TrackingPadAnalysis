@@ -249,8 +249,38 @@ if __name__ == "__main__":
     
     print 'there\'s a total of %.0f events in the tree' %(n_ev)
     
-    global loaded 
+    global loaded, targetdir, prefix
     loaded = False
+    
+    ###############################
+    # get a bit of information for the correct folder and prefix for the plots
+    ###############################
+    
+    voltage = my_run.bias_voltage
+    if voltage > 0:
+        volt_str = 'pos'+str(voltage)
+    else:  
+        volt_str = 'neg'+str(-1*voltage)
+    if   my_run.data_type == 0:
+        runtype = 'pedestal'
+        prefix  = my_run.diamond+'-run-'str(my_rn)+'-'+volt_str+'pedestal'
+    elif my_run.data_type == 1:
+        runtype = 'rate-scan'
+        prefix  = my_run.diamond+'-run-'str(my_rn)+'-'+volt_str+'data'
+    elif my_run.data_type == 2: 
+        runtype = 'voltage-scan'
+        prefix  = my_run.diamond+'-run-'str(my_rn)+'-'+volt_str+'data'
+    elif my_run.data_type == 3:
+        runtype = 'long-run'
+        prefix  = my_run.diamond+'-run-'str(my_rn)+'-'+volt_str+'data-long'
+    else
+        runtype = 'other'
+        prefix  = my_run.diamond+'-run-'str(my_rn)+'-'+volt_str+'other'
+
+    targetdir = 'results/'+my_run.diamond+'/'+runtype+'/'
+    if not os.path.isdir(targetdir):
+        os.mkdir(targetdir)
+
 
     ###############################
     # check if the histograms are already in the file. load them if they're there
