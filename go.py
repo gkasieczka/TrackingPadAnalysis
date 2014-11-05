@@ -45,7 +45,7 @@ if do_pedestal:
     for run in ped_not:
         cmd = 'python Analyze.py '+str(run)
         print 'calling', cmd
-        call('python Analyze.py '+str(run), shell=True)
+        call('python Analyze.py reload '+str(run), shell=True)
 
 if do_data:
     dat_not = []
