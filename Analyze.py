@@ -40,7 +40,7 @@ def getPedestalValue(hist):
     c0 = ROOT.TCanvas('foo', 'bar', 600, 600)
     ## tmp_hist.Draw('')
     ## func.Draw('same')
-    c0.SaveAs(targetdir+'/pedestal.pdf')
+    c0.SaveAs(targetdir+'/'+prefix+'_pedestal.pdf')
     return central
     
 
@@ -57,16 +57,21 @@ def makeTimePlots(h_time_2d):
     func.SetParameters(1, h_time_2d.GetMean(), h_time_2d.GetRMS() )
 
 
-    land = h_time_2d.ProjectionY()
-    land.Fit(func)
+    land = copy.deepcopy(h_time_2d.ProjectionY())
+    # land.Fit(func)
+    fit_res = ah.fitLandauGaus(land, True)
     c0 = ROOT.TCanvas('time_canvas', 'Canvas of the time evolution', 600, 300)
-    if neg_landau:
-        land.GetXaxis().SetRangeUser(-250,0)
-    else:
-        land.GetXaxis().SetRangeUser(0,250)
-    land.Draw()
-    c0.SaveAs(targetdir+'/landau.pdf')
-
+    c0.cd()
+    ### if neg_landau:
+    ###     land.GetXaxis().SetRangeUser(-250,0)
+    ### else:
+    ###     land.GetXaxis().SetRangeUser(0,250)
+    ### land.Draw()
+    ### c0.SaveAs(targetdir+'/'+prefix+'_landau.pdf')
+    #land.Draw()
+    fit_res[2].Draw()
+    c0.SaveAs(targetdir+'/'+prefix+'_landauGaus.pdf')
+    # return
 
     arr = ROOT.TObjArray()
     h_time_2d.FitSlicesY(func, 0, -1, 0, 'QNR', arr)
@@ -95,10 +100,11 @@ def makeTimePlots(h_time_2d):
     h_time_2d.GetYaxis().SetTitle('pulse height')
     h_time_2d.GetYaxis().SetLabelSize(0.05)
     h_time_2d.GetYaxis().SetTitleSize(0.05)
+    h_time_2d.GetYaxis().SetRangeUser(-50,300)
     h_time_2d.Draw('colz')
     mpvs.Draw('same pe')
 
-    c0.SaveAs(targetdir+'/time_2d.pdf')
+    c0.SaveAs(targetdir+'/'+prefix+'_time_2d.pdf')
     return arr
 
 
@@ -204,7 +210,7 @@ def makeXYPlots(h_3d):
     h_2d_sigma.Draw('colz')
     h_2d_sigma.GetZaxis().SetRangeUser(0., central+10.)
     
-    c1.SaveAs(targetdir+'/xyPlots.pdf')
+    c1.SaveAs(targetdir+'/'+prefix+'_xyPlots.pdf')
     # ROOT.gStyle.Reset()
     # reset the style
     ROOT.gStyle.SetTitleSize(tmp_size,'t')
@@ -224,9 +230,9 @@ if __name__ == "__main__":
     
     RunInfo.load('runs.json')
 
-    
     global my_rn
     ## my_rn  = int(sys.argv[-1])
+    print 'argv:',sys.argv
     my_rn  = int([i for i in sys.argv if i.isdigit() == True][0]) ## search for the first number in the list of arguments
     my_run = RunInfo.runs[my_rn]
     print my_run.__dict__
@@ -269,21 +275,22 @@ if __name__ == "__main__":
         volt_str = 'neg'+str(-1*voltage)
 
     # check run type
+    rate    = str(my_run.fs11)+'_'+str(abs(my_run.fsh13))
     if   my_run.data_type == 0:
         runtype = 'rate-scan'
-        prefix  = my_run.diamond+'-run-'+str(my_rn)+'-'+volt_str+'data'
+        prefix  = my_run.diamond+'-run-'+'%03d'%(my_rn)+'-'+volt_str+'-'+rate+'-rate'
     elif my_run.data_type == 1:
         runtype = 'pedestal'
-        prefix  = my_run.diamond+'-run-'+str(my_rn)+'-'+volt_str+'pedestal'
+        prefix  = my_run.diamond+'-run-'+'%03d'%(my_rn)+'-'+volt_str+'-'+rate+'-pedestal'
     elif my_run.data_type == 2: 
         runtype = 'voltage-scan'
-        prefix  = my_run.diamond+'-run-'+str(my_rn)+'-'+volt_str+'data'
+        prefix  = my_run.diamond+'-run-'+'%03d'%(my_rn)+'-'+volt_str+'-'+rate+'-voltage'
     elif my_run.data_type == 3:
         runtype = 'long-run'
-        prefix  = my_run.diamond+'-run-'+str(my_rn)+'-'+volt_str+'data-long'
+        prefix  = my_run.diamond+'-run-'+'%03d'%(my_rn)+'-'+volt_str+'-'+rate+'-data-long'
     else:
         runtype = 'other'
-        prefix  = my_run.diamond+'-run-'+str(my_rn)+'-'+volt_str+'other'
+        prefix  = my_run.diamond+'-run-'+'%03d'%(my_rn)+'-'+volt_str+'-'+rate+'-other'
 
     targetdir = 'results/'+my_run.diamond+'/'+runtype+'/'
     if not os.path.isdir(targetdir):
@@ -344,8 +351,8 @@ if __name__ == "__main__":
         length = time_last - time_first
         mins = length/time_binning
 
-        h_time_2d            = ROOT.TH2F('h_time_2d'           , 'h_time_2d'           , int(mins+1), 0., int(mins+1), 500, -250., 250.)
-        h_time_2d_chn2offset = ROOT.TH2F('h_time_2d_chn2offset', 'h_time_2d_chn2offset', int(mins+1), 0., int(mins+1), 500, -250., 250.)
+        h_time_2d            = ROOT.TH2F('h_time_2d'           , 'h_time_2d'           , int(mins+1), 0., int(mins+1), 400, -50, 350.)
+        h_time_2d_chn2offset = ROOT.TH2F('h_time_2d_chn2offset', 'h_time_2d_chn2offset', int(mins+1), 0., int(mins+1), 400, -50, 350.)
     
         print 'run of %.2f minutes length' %(mins)
         
@@ -369,14 +376,18 @@ if __name__ == "__main__":
             ########################################
 
             rel_time = int( (ev.t_pad - time_first) / time_binning) ## change to t_pad 
+            if my_run.bias_voltage>0:
+                factor = -1.0
+            else:
+                factor = 1.0
         
             # fill the 3D histogram
-            h_3d           .Fill(ev.track_x, ev.track_y, ev.integral50 - pedestal)
-            h_3d_chn2offest.Fill(ev.track_x, ev.track_y, ev.integral50 - pedestal - ev.avrg_first_chn2)
+            h_3d           .Fill(ev.track_x, ev.track_y, factor*(ev.integral50 - pedestal))
+            h_3d_chn2offest.Fill(ev.track_x, ev.track_y, factor*(ev.integral50 - pedestal - ev.avrg_first_chn2))
         
             # fill all the time histograms with the integral
-            h_time_2d           .Fill(rel_time, ev.integral50 - pedestal)
-            h_time_2d_chn2offset.Fill(rel_time, ev.integral50 - pedestal - ev.avrg_first_chn2)
+            h_time_2d           .Fill(rel_time, factor*(ev.integral50 - pedestal))
+            h_time_2d_chn2offset.Fill(rel_time, factor*(ev.integral50 - pedestal - ev.avrg_first_chn2))
         
         # re-open file for writing
         infile.ReOpen('UPDATE')
@@ -391,12 +402,16 @@ if __name__ == "__main__":
         print '--- this is a pedestal run ---------'
         print '------------------------------------'
         pedestal = getPedestalValue(h_time_2d)
+        RunInfo.load('runs.json')
+        my_run = RunInfo.runs[my_rn]
         my_run.pedestal = pedestal
+        RunInfo.update_run_info(my_run)
         for rn, r in RunInfo.runs.items():
             if r == my_run: continue
             if r.pedestal_run == my_run.number:
                 r.pedestal = pedestal
-        RunInfo.dump('runs.json')
+                RunInfo.update_run_info(r)
+        #RunInfo.dump('runs.json')
         
         
     else:
