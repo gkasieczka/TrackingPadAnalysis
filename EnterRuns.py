@@ -24,8 +24,12 @@ RunInfo.load(runs_filename)
 ###############################
 # Main work loop
 ###############################
-
-last_run_number = max(RunInfo.runs.keys())
+july_entered_runs = []
+for entry in RunInfo.runs:
+    if getattr(RunInfo.runs[entry],"test_campaign") == "PSI_July14":
+        july_entered_runs.append(entry)
+#last_run_number = max(RunInfo.runs.keys())
+last_run_number = max(july_entered_runs)
 
 while True:
     
