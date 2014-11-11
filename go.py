@@ -15,9 +15,13 @@ ROOT.gROOT.SetBatch()
 
 do_pedestal = False
 do_data     = False
+reload = False
 nProcesses = 12
 
 args = sys.argv
+
+if 'reload' in args:
+    reload = True
 
 if 'pedestal' in args or 'ped' in args or 'p' in args:
     do_pedestal = True
@@ -78,20 +82,27 @@ if do_data:
     print dat_not
     
     for run in dat_not:
-        cmd = 'python Analyze.py '+str(run)
+        cmd = 'python Analyze.py '
+        if reload:
+            cmd += 'reload '
+        cmd += str(run)
         commands.append(cmd)
         # print 'calling', cmd
         # call('python Analyze.py '+str(run), shell=True)
 pool = Pool(nProcesses)
 it = pool.imap_unordered(partial(call, shell=True), commands)
 failures = []
+complete = []
 for i, returncode in enumerate(it):
     # print multiprocessing.active_children()
     if returncode != 0:
         print("Command '%s'  failed: %d" % (commands[i], returncode))
         failures.append(i)
     else:
+        complete.append(i)
         print("Command '%s'  completed: %d" % (commands[i], returncode))
+print 'completed:',complete
 
 print 'Failures:',failures
+
 print 'finished'
