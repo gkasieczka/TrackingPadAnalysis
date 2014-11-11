@@ -39,7 +39,7 @@ def saveCanvas(c1,name):
     #print 'Save Canvas:',name
     name = name.split('/')
     fdir = '/'.join(name[:-1])
-    exts = ['pdf','eps','tex','root']
+    exts = ['pdf','eps','tex','root','png']
     #print '\t',name
     for ext in exts:
         fname= fdir+'/{ext}/{name}.{ext}'.format(ext=ext,name=name[-1])
