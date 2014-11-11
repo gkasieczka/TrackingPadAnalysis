@@ -79,7 +79,7 @@ def makeTimePlots(h_time_2d):
     land = copy.deepcopy(h_time_2d.ProjectionY())
     # land.Fit(func)
     fit_res = ah.fitLandauGaus(land, True)
-    c0 = ROOT.TCanvas('time_canvas', 'Canvas of the time evolution', 600, 300)
+    c0 = ROOT.TCanvas('time_canvas', 'Canvas of the time evolution', 1200, 600)
     c0.cd()
     ### if neg_landau:
     ###     land.GetXaxis().SetRangeUser(-250,0)
@@ -90,6 +90,8 @@ def makeTimePlots(h_time_2d):
     #land.Draw()
     fit_res[2].Draw()
     saveCanvas(c0,targetdir+'/'+'landauGaus_'+prefix)
+    fit_res[-1].Draw()
+    saveCanvas(c0,targetdir+'/'+'histo_'+prefix)
     # return
 
     arr = ROOT.TObjArray()
