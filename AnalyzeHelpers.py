@@ -54,7 +54,7 @@ def turnHisto(hist):
         tmp_hist.SetBinError  (nbins-bin, hist.GetBinError  (bin+1))
     return tmp_hist
 
-def fitLandauGaus(hist):
+def fitLandauGaus(hist, full = False):
 
     ## c1 = ROOT.TCanvas()
     ## c1.Divide(2)
@@ -87,44 +87,70 @@ def fitLandauGaus(hist):
 
 ## ROOFIT VERSION
 
-    x   = RooRealVar('x', 'x', hist.GetXaxis().GetXmin(), hist.GetXaxis().GetXmax())
+    xmin = hist.GetXaxis().GetXmin()
+    xmax = hist.GetXaxis().GetXmax()
+    mean = hist.GetMean()
+    mp = hist.GetXaxis().GetBinCenter(hist.GetMaximumBin())
+    rms = hist.GetRMS()
+    flandau = ROOT.TF1('flandau','landau',mp-20,mp+40)
+    hist.Fit(flandau,'Q')
+
+    x   = RooRealVar('x', 'signal / adc', 0,500)
+    x.setRange("signal",mp - 40, mp+90)
+    x.setRange("draw",0,500)
     ral = RooArgList(x)
     dh  = RooDataHist('dh', 'dh', ral, RooFit.Import(hist))
     
-    mean = hist.GetMean()
     
-    ml     = RooRealVar('ml', 'mean landau' , mean, mean-40., mean)
-    sl     = RooRealVar('sl', 'sigma landau', 10., 6., 14.)
+    if full: 
+        ml     = RooRealVar('ml', 'mean landau' , mp, mp-20., mp+30)
+        sl     = RooRealVar('sl', 'sigma landau', 10, 1., 25.)
+    else:
+        ml     = RooRealVar('ml', 'mean landau' , mean, mean-40., mean)
+        sl     = RooRealVar('sl', 'sigma landau', 10., 6., 14.)
     landau = RooLandau ('lx', 'lx', x, ml, sl)
     
     mean = 0
-    mg     = RooRealVar ('mg', 'mean gaus' , mean, mean-30.,  mean+30.)
-    sg     = RooRealVar ('sg', 'sigma gaus', 1., 0.1, 20.)
+    if full: 
+        mg     = RooRealVar ('mg', 'mean gaus' , 0,0,0)
+        sg     = RooRealVar ('sg', 'sigma gaus', flandau.GetParameter(2), 0.1, 30.)
+    else:
+        mg     = RooRealVar ('mg', 'mean gaus' , 0,0,0) #mean, mean-30.,  mean+30.)
+        sg     = RooRealVar ('sg', 'sigma gaus', 2., 0.1, 20.)
     gaus   = RooGaussian('gx', 'gx', x, mg, sg)
     
     x.setBins(1000,'cache')
     
     ## Construct landau (x) gauss
     lxg = RooFFTConvPdf('lxg','landau (x) gaus', x, landau, gaus)
-    lxg.fitTo(dh)
-
+    lxg.fitTo(dh,RooFit.Range("signal"))
+    #,RooFit.Normalization(ROOT.RooAbsReal.NumEvent,1))
     a = lxg.getParameters(dh)
-    print 'lxg.getParameters(dh)', a
-    print 'lxg.getParameters(dh).getRealValue(\'ml\')', a.getRealValue('ml')
 
-    frame = x.frame(RooFit.Title('landau (x) gauss convolution'))
-    dh.plotOn(frame)
-    lxg.plotOn(frame,RooFit.LineColor(ROOT.kRed))
-    landau.plotOn(frame,RooFit.LineStyle(ROOT.kDashed))
+    print 'fit par0                                     %+6.1f'%flandau.GetParameter(0)
+    print 'fit par1                                     %+6.1f'%flandau.GetParameter(1)
+    print 'fit par2                                     %+6.1f'%flandau.GetParameter(2)
+    print 'mp                                           %+6.1f'%mp
+    print 'rms                                          %+6.1f'%rms
+    print 'lxg.getParameters(dh).getRealValue(\'ml\'):  %+6.1f'% a.getRealValue('ml')
+    print 'lxg.getParameters(dh).getRealValue(\'sl\'):  %+6.1f'% a.getRealValue('sl')
+    print 'lxg.getParameters(dh).getRealValue(\'sg\'):  %+6.1f'% a.getRealValue('sg')
+
+    frame = x.frame(RooFit.Title('landau (x) gauss convolution'),RooFit.Range("draw"))
+    #,RooFit.Normalization(ROOT.RooAbsReal.NumEvent,1))
+    dh.plotOn(frame,RooFit.Range("draw"))
+    #,RooFit.Normalization(1./dh.numEntries(),ROOT.RooAbsReal.Raw))
+    lxg.plotOn(frame,RooFit.LineColor(ROOT.kRed),RooFit.Range("draw"))
+    #,RooFit.Normalization(1,ROOT.RooAbsReal.Raw))
+    #lxg.plotOn(frame,RooFit.LineColor(ROOT.kBlue),RooFit.Range("signal"),RooFit.Components('lx,gx'))
     
-    c = ROOT.TCanvas('lg_convolution','landau (x) gaus', 600, 600)
-    c.Divide(2)
-    c.cd(1)
-    hist.Draw()
-    c.cd(2)
-    ROOT.gPad.SetLeftMargin(0.15)
-    frame.GetYaxis().SetTitleOffset(1.4)
-    frame.Draw()
-    c.SaveAs('histograms/outputhisto'+hist.GetName().split('pz')[1]+'.pdf')
-
-    return dh, copy.deepcopy(a)
+    # c = ROOT.TCanvas('lg_convolution','landau (x) gaus', 600, 600)
+    # c.Divide(2)
+    # c.cd(1)
+    # hist.Draw()
+    # c.cd(2)
+    # ROOT.gPad.SetLeftMargin(0.15)
+    # frame.GetYaxis().SetTitleOffset(1.4)
+    # frame.Draw()
+    # c.SaveAs('histograms/outputhisto'+hist.GetName().split('pz')[1]+'.pdf')
+    return dh, copy.deepcopy(a), copy.deepcopy(frame),copy.deepcopy(hist)
