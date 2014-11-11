@@ -21,7 +21,8 @@ ROOT.gStyle.SetOptStat(0)
 frame = None
 f = []
 f_landau_gaus = []
-for (dirpath, dirnames, filenames) in walk(args.dir):
+dir = args.dir+'/root/'
+for (dirpath, dirnames, filenames) in walk(dir):
     print dirpath
     print dirnames
     f.extend(filenames)
