@@ -89,17 +89,17 @@ c1 = ROOT.TCanvas()
 c1.cd()
 
 h_event_fraction.Draw()
-c1.SaveAs('evenfraction.png')
+c1.SaveAs('output/evenfraction.png')
 
 h_event_fraction_vs_type.Draw('colz')
-c1.SaveAs('eventfraction_vs_type.png')
+c1.SaveAs('output/eventfraction_vs_type.png')
 
 h_analysis_status.SetMarkerSize(h_analysis_status.GetMarkerSize()*2.)
 h_analysis_status.SetMaximum(1.2*h_analysis_status.GetMaximum())
 h_analysis_status.Draw('text00hist')
-c1.SaveAs('h_analysis_status.png')
+c1.SaveAs('output/h_analysis_status.png')
 h_event_fraction_vs_rate.Draw('colztext')
-c1.SaveAs('h_event_fraction_vs_rate.png')
+c1.SaveAs('output/h_event_fraction_vs_rate.png')
 # print 'no data: ',n_no_data,'of',len(RunInfo.runs)
 #
 # print 'No data (-2): ',sorted(a_minus_one)
