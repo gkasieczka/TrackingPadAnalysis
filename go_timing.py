@@ -9,6 +9,8 @@ from subprocess import call
 import subprocess
 import multiprocessing
 import datetime
+import ROOT
+ROOT.gROOT.SetBatch()
 
 do_pedestal = False
 do_data     = False
@@ -27,12 +29,21 @@ RunInfo.load('runs.json')
 print 'There are in total {n_runs} runs in the DB'.format(n_runs=len(RunInfo.runs))
 
 nProcesses = 10
+failures = []
+completed = []
 if do_timing:
     timing_not = []
     timing_all = []
 
     for rn, r in RunInfo.runs.items():
-        if r.calibration_event_fraction < 0 or r.time_timing_alignment < d:
+        if r.test_campaign !="PSI_Sept14":
+            continue
+        # if rn == 726:
+        #     print 'run ',rn
+        #     print 'fraction: ',r.calibration_event_fraction
+        #     print 'time: ',r.time_timing_alignment,' ',d,' ', r.time_timing_alignment < d
+        # if r.calibration_event_fraction < 0
+        if r.calibration_event_fraction > 0 and r.time_timing_alignment < d:
             timing_all.append(rn)
             # if math.isnan(r.pedestal) and r.calibration_event_fraction > 0.:
             #     ped_not.append(rn)
@@ -50,10 +61,12 @@ if do_timing:
         # print multiprocessing.active_children()
         if returncode != 0:
             print("Command '%s'  failed: %d" % (commands[i], returncode))
+            failures.append(i)
         else:
             print("Command '%s'  completed: %d" % (commands[i], returncode))
         # call(cmd, shell=True)
 
+print 'Failures:',failures
 # if do_data:
 #     dat_not = []
 #     dat_all = []
