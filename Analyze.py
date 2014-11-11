@@ -30,6 +30,25 @@ ROOT.gStyle.SetNumberContours( 999 )
 
 ROOT.gROOT.SetBatch()
 
+def ensure_dir(f):
+    d = os.path.dirname(f)
+    if not os.path.exists(d):
+        os.makedirs(d)
+
+def saveCanvas(c1,name):
+    #print 'Save Canvas:',name
+    name = name.split('/')
+    fdir = '/'.join(name[:-1])
+    exts = ['pdf','eps','tex','root']
+    #print '\t',name
+    for ext in exts:
+        fname= fdir+'/{ext}/{name}.{ext}'.format(ext=ext,name=name[-1])
+        #print '\t',fname
+        ensure_dir(fname)
+        c1.SaveAs(fname)
+    #raw_input()
+
+
 def getPedestalValue(hist):
     tmp_hist = copy.deepcopy(hist.ProjectionY())
     rms = tmp_hist.GetRMS()
@@ -40,7 +59,7 @@ def getPedestalValue(hist):
     c0 = ROOT.TCanvas('foo', 'bar', 600, 600)
     ## tmp_hist.Draw('')
     ## func.Draw('same')
-    c0.SaveAs(targetdir+'/'+prefix+'_pedestal.pdf')
+    saveCanvas(c0,targetdir+'/'+'pedestal_'+prefix)
     return central
     
 
@@ -70,7 +89,7 @@ def makeTimePlots(h_time_2d):
     ### c0.SaveAs(targetdir+'/'+prefix+'_landau.pdf')
     #land.Draw()
     fit_res[2].Draw()
-    c0.SaveAs(targetdir+'/'+prefix+'_landauGaus.pdf')
+    saveCanvas(c0,targetdir+'/'+'landauGaus_'+prefix)
     # return
 
     arr = ROOT.TObjArray()
@@ -104,7 +123,7 @@ def makeTimePlots(h_time_2d):
     h_time_2d.Draw('colz')
     mpvs.Draw('same pe')
 
-    c0.SaveAs(targetdir+'/'+prefix+'_time_2d.pdf')
+    saveCanvas(c0,targetdir+'/'+'time_2d'+prefix)
     return arr
 
 
@@ -210,7 +229,7 @@ def makeXYPlots(h_3d):
     h_2d_sigma.Draw('colz')
     h_2d_sigma.GetZaxis().SetRangeUser(0., central+10.)
     
-    c1.SaveAs(targetdir+'/'+prefix+'_xyPlots.pdf')
+    saveCanvas(c1,targetdir+'/'+prefix+'_xyPlots')
     # ROOT.gStyle.Reset()
     # reset the style
     ROOT.gStyle.SetTitleSize(tmp_size,'t')
@@ -278,6 +297,7 @@ if __name__ == "__main__":
     rate    = str(my_run.fs11)+'_'+str(abs(my_run.fsh13))
     if   my_run.data_type == 0:
         runtype = 'rate-scan'
+        #prefix = '{diamond}-run-{run:03d}-{volt_str}-{rate}-rate'
         prefix  = my_run.diamond+'-run-'+'%03d'%(my_rn)+'-'+volt_str+'-'+rate+'-rate'
     elif my_run.data_type == 1:
         runtype = 'pedestal'
@@ -300,10 +320,13 @@ if __name__ == "__main__":
     ###############################
     # check if the histograms are already in the file. load them if they're there
     ###############################
+    h_3d = None
+    h_time_2d = None
 
     if infile.Get('h_3dfull') != None and infile.Get('h_time_2d') != None:
         h_3d      = copy.deepcopy(infile.Get('h_3dfull') )
         h_time_2d = copy.deepcopy(infile.Get('h_time_2d'))
+
         loaded = True
         print 'file already loaded'
     
@@ -315,14 +338,16 @@ if __name__ == "__main__":
     if not loaded:
 
         print 'loading the histograms into the root file'
+        if h_3d:
+            h_3d.Delete()
         h_3d = ROOT.TH3F('h_3dfull','3D histogram', 
              25,   -0.30,   0.20, 
              25,   -0.10,   0.40, 
-            200, -400.00, 400.00)
+            250, -500.00, 500.00)
         h_3d_chn2offest = ROOT.TH3F('h_3dfull_chn2offest','3D histogram with chn2 offset', 
              25,   -0.30,   0.20, 
              25,   -0.10,   0.40, 
-            200, -400.00, 400.00)
+            250, -500.00, 500.00)
 
         runPedestal = math.isnan(my_run.pedestal) and (my_run.pedestal_run == -1 or my_run.number == my_run.pedestal_run)
 
@@ -351,8 +376,10 @@ if __name__ == "__main__":
         length = time_last - time_first
         mins = length/time_binning
 
-        h_time_2d            = ROOT.TH2F('h_time_2d'           , 'h_time_2d'           , int(mins+1), 0., int(mins+1), 400, -50, 350.)
-        h_time_2d_chn2offset = ROOT.TH2F('h_time_2d_chn2offset', 'h_time_2d_chn2offset', int(mins+1), 0., int(mins+1), 400, -50, 350.)
+        if h_time_2d:
+            h_time_2d.Delete()
+        h_time_2d            = ROOT.TH2F('h_time_2d'           , 'h_time_2d'           , int(mins+1), 0., int(mins+1), 550, -50, 500.)
+        h_time_2d_chn2offset = ROOT.TH2F('h_time_2d_chn2offset', 'h_time_2d_chn2offset', int(mins+1), 0., int(mins+1), 550, -50, 500.)
     
         print 'run of %.2f minutes length' %(mins)
         
@@ -397,6 +424,7 @@ if __name__ == "__main__":
         h_time_2d.Write()
         loaded = True
     
+    ROOT.gStyle.SetOptStat(11)
     if my_run.data_type == 1:
         print '------------------------------------'
         print '--- this is a pedestal run ---------'
