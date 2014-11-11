@@ -67,6 +67,8 @@ def fitLandauGaus(hist, full = False):
         hist = turnHisto(hist)
 
     hist.Rebin(2)
+    hist.SetTitle('')
+    hist.SetName('hSignal')
     ## c1.cd(2)
     ## hist.Draw('hist')
     ## c1.SaveAs('foobar.pdf')
@@ -93,7 +95,24 @@ def fitLandauGaus(hist, full = False):
     mp = hist.GetXaxis().GetBinCenter(hist.GetMaximumBin())
     rms = hist.GetRMS()
     flandau = ROOT.TF1('flandau','landau',mp-20,mp+40)
-    hist.Fit(flandau,'Q')
+    flandau.SetLineWidth(1)
+    flandau.SetLineColor(ROOT.kBlue)
+    hist2 = hist.Clone(hist.GetName()+'_2')
+    hist2.Scale(1./hist2.GetBinContent(hist2.GetMaximumBin()))
+    hist2.Fit(flandau,'Q','',mp-20,mp+40)
+
+    flandau2 = flandau.Clone('flandau2')
+    flandau2.SetRange(0,500)
+    flandau2.SetLineStyle(2)
+
+    for i in range(flandau.GetNpar()):
+        flandau2.SetParLimits(i,flandau.GetParameter(i),flandau.GetParameter(i))
+    hist2.Fit(flandau2,'Q+')#,'same',mp-20,mp+40)
+    for i in range(flandau.GetNpar()):
+        hist2.GetFunction('flandau2').SetParameter(i,flandau.GetParameter(i))
+
+    for i in range(flandau.GetNpar()):
+        print flandau.GetParameter(i),flandau2.GetParameter(i)
 
     x   = RooRealVar('x', 'signal / adc', 0,500)
     x.setRange("signal",mp - 40, mp+90)
@@ -153,4 +172,4 @@ def fitLandauGaus(hist, full = False):
     # frame.GetYaxis().SetTitleOffset(1.4)
     # frame.Draw()
     # c.SaveAs('histograms/outputhisto'+hist.GetName().split('pz')[1]+'.pdf')
-    return dh, copy.deepcopy(a), copy.deepcopy(frame),copy.deepcopy(hist)
+    return dh, copy.deepcopy(a), copy.deepcopy(frame),copy.deepcopy(hist2)
