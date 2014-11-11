@@ -58,7 +58,8 @@ class RunInfo:
                  events_trig,  # [int] (total events, used for triggering)
                  pedestal_run,  # [int] run from which to take pedestal information
                  #         (set to -1 for pedestal runs or if no pedestal run is available)
-                 test_campaign="PSI_Sept14",
+                 # test_campaign="PSI_Sept14",
+                 test_campaign="PSI_July14",
                  # [str] Which testbeam campaign are the data from
                  pedestal=float('nan'),  # [float] for data runs: which pedestal value to subtract
                  comment="",  # [string] free text
