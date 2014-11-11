@@ -30,6 +30,7 @@ for (dirpath, dirnames, filenames) in walk(dir):
         if 'histo_' in fname:
             f_landau_gaus.append(dirpath+fname)
     break
+
 histos = {}
 diamond = ''
 for f in f_landau_gaus:
@@ -55,6 +56,7 @@ for f in f_landau_gaus:
     print histos, ps
 
 c2 = my_style.get_canvas('c_rate_development')
+c2.cd()
 frame = c2.DrawFrame(0,0,500,1,'')
 frame.GetXaxis().SetTitle('Signal / ADC')
 frame.SetLineColor(0)
@@ -67,6 +69,11 @@ RunInfo.RunInfo.load('runs.json')
 maximum = 0
 
 bias = -500
+bias_currents = list(set([RunInfo.RunInfo.runs[run].bias_voltage for run in histos]))
+
+print bias_currents
+if bias not in bias_currents:
+    bias *= -1
 ROOT.gStyle.SetOptStat(0)
 drawn_histos = []
 rates = []
@@ -75,17 +82,34 @@ mps = []
 e_mps = []
 means = []
 e_means = []
+is_rate_scan = False
+is_bias_scan = False
+print args.dir
+if 'rate' in args.dir:
+    is_rate_scan = True
+elif 'bias' in args.dir:
+    is_bias_scan = True
+print 'bias scan:',is_bias_scan
+print 'rate scan:',is_rate_scan
+
 for run in sorted(histos.keys()):
     this_run = RunInfo.RunInfo.runs[run]
-    if this_run.bias_voltage != bias:
-        continue
+    if is_rate_scan:
+        print run , this_run.bias_voltage
+        if this_run.bias_voltage != bias:
+            continue
+    elif is_bias_scan:
+        pass
     if diamond == '':
         diamond = this_run.diamond
     h = histos[run]
     h.UseCurrentStyle()
     h.SetLineWidth(2)
     integral = 0
-    h.SetTitle('Run %3d @ %4.2e kHz/cm^{2}'%(run,this_run.get_rate()))
+    if is_rate_scan:
+        h.SetTitle('Run %3d @ %4.2e kHz/cm^{2}'%(run,this_run.get_rate()))
+    if is_bias_scan:
+        h.SetTitle('Run %3d @ %+5d V'%(run,this_run.bias_voltage))
     h.SetLineColor(k)
     h.SetMarkerColor(k)
     h.SetFillStyle(0)
@@ -109,10 +133,14 @@ for run in drawn_histos:
     leg.AddEntry(h,h.GetTitle())
 leg.Draw()
 c2.Update()
-my_style.save_canvas(c2,'rate_scan_landaus')
+print 'drawn:',drawn_histos
+if is_rate_scan:
+    my_style.save_canvas(c2,'rate_scan_landaus')
+elif is_bias_scan:
+    my_style.save_canvas(c2,'bias_scan_landaus')
 
 my_style.set_style(width,width,.9)
-c1 = my_style.get_canvas('development')
+c1 = my_style.get_canvas('rate_scan_development')
 g_mp = ROOT.TGraph(len(rates))
 g_mp.SetName('g_mp')
 g_mp.SetTitle('MP vs rate')
@@ -135,21 +163,23 @@ for i in range(len(rates)):
     g_mean.SetPointError(i,e_rates[i],1.)
     #e_means[i])
 
-mg = ROOT.TMultiGraph('mg',';rate / #frac{Hz}{cm^{2}}; signal / adc')
-mg.Add(g_mp)
-mg.Add(g_mean)
-mg.Draw('APL')
-leg = my_style.make_legend(.5,.9,2)
+if is_rate_scan:
+    mg = ROOT.TMultiGraph('mg',';rate / #frac{Hz}{cm^{2}}; signal / adc')
+    mg.Add(g_mp)
+    mg.Add(g_mean)
+    mg.Draw('APL')
+    leg = my_style.make_legend(.5,.9,2)
 
-leg.AddEntry(g_mp)
-leg.AddEntry(g_mean)
-leg.Draw()
-c1.Update()
-arrow = ROOT.TArrow()
-arrow_means = []
-arrow_mps = []
-for i in range(len(rates)-1):
-    arrow_means.append(arrow.DrawArrow(rates[i],means[i],rates[i+1],means[i+1],0.02,'->-'))
-    arrow_mps.append(arrow.DrawArrow(rates[i],mps[i],rates[i+1],mps[i+1],0.02,'->-'))
-c1.Update()
-my_style.save_canvas(c1,'rate_scan_means')
+    leg.AddEntry(g_mp)
+    leg.AddEntry(g_mean)
+    leg.Draw()
+    c1.Update()
+    arrow = ROOT.TArrow()
+    arrow_means = []
+    arrow_mps = []
+    for i in range(len(rates)-1):
+        arrow_means.append(arrow.DrawArrow(rates[i],means[i],rates[i+1],means[i+1],0.02,'->-'))
+        arrow_mps.append(arrow.DrawArrow(rates[i],mps[i],rates[i+1],mps[i+1],0.02,'->-'))
+    c1.Update()
+
+    my_style.save_canvas(c1,'rate_scan_means')
