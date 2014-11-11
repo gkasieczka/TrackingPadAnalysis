@@ -106,23 +106,7 @@ class RunInfo:
         # Add to runs dictionary
         RunInfo.runs[self.number] = self
 
-    # End of __init__
-    @staticmethod
-    def update_timing(run, align_ev_pixel, align_ev_pad, time_offset, time_drift):
-        RunInfo.runs[run].align_ev_pixel = align_ev_pixel
-        RunInfo.runs[run].align_ev_pad = align_ev_pad
-        RunInfo.runs[run].time_offset = time_offset
-        RunInfo.runs[run].time_drift = time_drift
 
-    @staticmethod
-    def update_run_info(run_timing):
-        # run_timing.print_info()
-        print 'save to json: ',run_timing.number
-        RunInfo.load('runs.json')
-        RunInfo.runs[run_timing.number] = run_timing
-        # RunInfo.update_timing(run_timing.run, run_timing.align_pixel, run_timing.align_pad, run_timing.offset,
-        #                       run_timing.slope)
-        RunInfo.dump('runs.json')
 
     def get_mask_key(self):
         key = MaskInfo.create_name(self.diamond, signum(self.bias_voltage), self.data_type, self.mask_time)
@@ -145,6 +129,46 @@ class RunInfo:
                                                                           self.diamond,
                                                                           self.bias_voltage)
 
+    def get_rate(self):
+        rates = {
+            "PSI_Sept14":{
+                (-1,70): 4000,
+                (-10,70): 55000,
+                (-50,80): 620000,
+                (-50,120): 2000000
+            },
+            "PSI_July14":{
+                (-2,70): 10000,
+                (-10,70): 55000,
+                (-50,80): 620000,
+                (-50,120): 2000000
+            }
+        }
+        if not self.test_campaign in rates:
+            return -1
+        if not (self.fsh13,self.fs11) in rates[self.test_campaign]:
+            return -2
+        return rates[self.test_campaign][(self.fsh13,self.fs11)]
+
+
+
+    # End of __init__
+    @staticmethod
+    def update_timing(run, align_ev_pixel, align_ev_pad, time_offset, time_drift):
+        RunInfo.runs[run].align_ev_pixel = align_ev_pixel
+        RunInfo.runs[run].align_ev_pad = align_ev_pad
+        RunInfo.runs[run].time_offset = time_offset
+        RunInfo.runs[run].time_drift = time_drift
+
+    @staticmethod
+    def update_run_info(run_timing):
+        # run_timing.print_info()
+        print 'save to json: ',run_timing.number
+        RunInfo.load('runs.json')
+        RunInfo.runs[run_timing.number] = run_timing
+        # RunInfo.update_timing(run_timing.run, run_timing.align_pixel, run_timing.align_pad, run_timing.offset,
+        #                       run_timing.slope)
+        RunInfo.dump('runs.json')
 
     # Dump all RunInfos (the content of the runs dictionary)
     #  to a file using json
