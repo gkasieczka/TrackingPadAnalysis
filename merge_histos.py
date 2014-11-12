@@ -13,7 +13,7 @@ parser.add_argument('dir')
 args = parser.parse_args()
 
 my_style = root_style()
-my_style.main_dir=args.dir
+my_style.main_dir=args.dir+'/output/'
 width = 1000
 my_style.set_style(width,width,1.)
 ROOT.gStyle.SetOptStat(0)
@@ -27,7 +27,7 @@ for (dirpath, dirnames, filenames) in walk(dir):
     print dirnames
     f.extend(filenames)
     for fname in filenames:
-        if 'histo_' in fname:
+        if 'time_2d' in fname:
             f_landau_gaus.append(dirpath+fname)
     break
 
@@ -48,7 +48,7 @@ for f in f_landau_gaus:
     for key in canvas.GetListOfPrimitives():
         print '\t', key.GetName(),key
         prim  = canvas.GetPrimitive(key.GetName()).Clone()
-        if 'hSignal' in key.GetName():
+        if 'h_time_2d' in key.GetName():
             print 'add'
             histos[run] = copy.deepcopy(prim)
         else:
@@ -82,12 +82,13 @@ mps = []
 e_mps = []
 means = []
 e_means = []
+ratios = []
 is_rate_scan = False
 is_bias_scan = False
 print args.dir
 if 'rate' in args.dir:
     is_rate_scan = True
-elif 'bias' in args.dir:
+elif 'bias' in args.dir or 'voltage' in args.dir:
     is_bias_scan = True
 print 'bias scan:',is_bias_scan
 print 'rate scan:',is_rate_scan
@@ -102,7 +103,8 @@ for run in sorted(histos.keys()):
         pass
     if diamond == '':
         diamond = this_run.diamond
-    h = histos[run]
+    ## marc marc h = histos[run].ProjectionY().Clone()
+    h = histos[run].Clone()
     h.UseCurrentStyle()
     h.SetLineWidth(2)
     integral = 0
@@ -121,6 +123,7 @@ for run in sorted(histos.keys()):
     maximum = max(maximum, h.GetBinContent(h.GetMaximumBin()))
     mps.append(h.GetXaxis().GetBinCenter(h.GetMaximumBin()))
     means.append(h.GetMean())
+    ratios.append(h.GetMean() / h.GetXaxis().GetBinCenter(h.GetMaximumBin()) )
     e_means.append(h.GetRMS())
     rates.append(this_run.get_rate())
     e_rates.append(rates[-1]*.1)
@@ -129,18 +132,24 @@ frame.GetYaxis().SetRangeUser(0,maximum*1.1)
 leg = my_style.make_legend(.5,.9,len(drawn_histos))
 for run in drawn_histos:
     h = histos[run]
-    print 'addding ',run,h.GetTitle()
+    print 'adding ',run,h.GetTitle()
     leg.AddEntry(h,h.GetTitle())
 leg.Draw()
 c2.Update()
-print 'drawn:',drawn_histos
+print 'drawn:',drawn_histos,is_rate_scan,is_bias_scan
 if is_rate_scan:
     my_style.save_canvas(c2,'rate_scan_landaus')
 elif is_bias_scan:
     my_style.save_canvas(c2,'bias_scan_landaus')
 
 my_style.set_style(width,width,.9)
+
 c1 = my_style.get_canvas('rate_scan_development')
+pad_plot  = my_style.make_pad('plot')
+pad_ratio = my_style.make_pad('ratio')
+pad_plot.SetTicks(1,1)
+pad_ratio.SetTicks(1,1)
+
 g_mp = ROOT.TGraph(len(rates))
 g_mp.SetName('g_mp')
 g_mp.SetTitle('MP vs rate')
@@ -156,10 +165,20 @@ g_mean.SetMarkerStyle(21)
 g_mean.SetMarkerColor(ROOT.kGreen)
 g_mean.SetFillColor(0)
 g_mean.SetFillStyle(0)
+
+g_ratio = ROOT.TGraphErrors(len(rates))
+g_ratio.SetName('g_ratio')
+g_ratio.SetTitle('mean / mpv')
+g_ratio.SetMarkerStyle(22)
+g_ratio.SetMarkerColor(ROOT.kRed)
+g_ratio.SetFillColor(0)
+g_ratio.SetFillStyle(0)
+
 for i in range(len(rates)):
     r = rates[i]
     g_mp.SetPoint(i,rates[i],mps[i])
     g_mean.SetPoint(i,rates[i],means[i])
+    g_ratio.SetPoint(i,rates[i],ratios[i])
     g_mean.SetPointError(i,e_rates[i],1.)
     #e_means[i])
 
@@ -167,6 +186,7 @@ if is_rate_scan:
     mg = ROOT.TMultiGraph('mg',';rate / #frac{Hz}{cm^{2}}; signal / adc')
     mg.Add(g_mp)
     mg.Add(g_mean)
+    pad_plot.cd()
     mg.Draw('APL')
     leg = my_style.make_legend(.5,.9,2)
 
@@ -174,6 +194,9 @@ if is_rate_scan:
     leg.AddEntry(g_mean)
     leg.Draw()
     c1.Update()
+    pad_ratio.cd()
+    g_ratio.Draw('APL')
+    
     arrow = ROOT.TArrow()
     arrow_means = []
     arrow_mps = []

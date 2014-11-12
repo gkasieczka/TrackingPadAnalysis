@@ -11,6 +11,8 @@ Analysis of the Runs and plot production
 import ROOT, copy, sys, math, os
 from RunInfo import RunInfo
 import AnalyzeHelpers as ah
+import warnings
+import root_style
 
 ###############################
 # Usage
@@ -24,11 +26,14 @@ def usage():
 ###############################
 # set the palette to 53
 ###############################
+this_style = root_style.root_style()
+width = 1000
 
 ROOT.gStyle.SetPalette(53)
 ROOT.gStyle.SetNumberContours( 999 )
 
 ROOT.gROOT.SetBatch()
+this_style.set_style(width,width,1)
 
 def ensure_dir(f):
     d = os.path.dirname(f)
@@ -39,14 +44,8 @@ def saveCanvas(c1,name):
     #print 'Save Canvas:',name
     name = name.split('/')
     fdir = '/'.join(name[:-1])
-    exts = ['pdf','eps','tex','root','png']
-    #print '\t',name
-    for ext in exts:
-        fname= fdir+'/{ext}/{name}.{ext}'.format(ext=ext,name=name[-1])
-        #print '\t',fname
-        ensure_dir(fname)
-        c1.SaveAs(fname)
-    #raw_input()
+    this_style.main_dir = fdir
+    this_style.save_canvas(c1,name[-1])
 
 
 def getPedestalValue(hist):
@@ -123,8 +122,12 @@ def makeTimePlots(h_time_2d):
     h_time_2d.GetYaxis().SetTitleSize(0.05)
     h_time_2d.GetYaxis().SetRangeUser(-50,300)
     h_time_2d.Draw('colz')
-    mpvs.Draw('same pe')
 
+    pave = ah.addDiamondInfo(0.1, 0.7, 0.35, 0.9, my_run)
+
+    mpvs.Draw('same pe')
+    pave.Draw()
+ 
     saveCanvas(c0,targetdir+'/'+'time_2d'+prefix)
     return arr
 
@@ -230,6 +233,10 @@ def makeXYPlots(h_3d):
     h_2d_sigma.SetTitle('width of PH')
     h_2d_sigma.Draw('colz')
     h_2d_sigma.GetZaxis().SetRangeUser(0., central+10.)
+
+    c1.cd(0)
+    pave = ah.addDiamondInfo(0.4, 0.45, 0.6, 0.55, my_run)
+    pave.Draw('same')
     
     saveCanvas(c1,targetdir+'/'+prefix+'_xyPlots')
     # ROOT.gStyle.Reset()
@@ -398,12 +405,17 @@ if __name__ == "__main__":
                
             ########################################
             # check if the delay is correct, if not exit after 10 wrong events
-            if abs(ev.delay_cali-ev.fixed_delay_cali) > 5 or abs(ev.delay_data-ev.fixed_delay_data) > 5:
-                n_wrong_delay += 1
-                if n_wrong_delay > 10:
-                    print 'the delay is screwed up. difference between fixed and event by event is off by 5 in more than 10 events'
-                    print 'exiting...'
-                    sys.exit(-1)
+            try:
+                if abs(ev.delay_cali-ev.fixed_delay_cali) > 5 or abs(ev.delay_data-ev.fixed_delay_data) > 5:
+                    n_wrong_delay += 1
+                    if n_wrong_delay > 10:
+                        print 'the delay is screwed up. difference between fixed and event by event is off by 5 in more than 10 events'
+                        print 'exiting...'
+                        sys.exit(-1)
+            except AttributeError as e:
+                if n_wrong_delay ==0:
+                    warnings.warn('cannot find delays for this run')
+                n_wrong_delay+=1
             ########################################
 
             rel_time = int( (ev.t_pad - time_first) / time_binning) ## change to t_pad 
@@ -414,11 +426,15 @@ if __name__ == "__main__":
         
             # fill the 3D histogram
             h_3d           .Fill(ev.track_x, ev.track_y, factor*(ev.integral50 - pedestal))
-            h_3d_chn2offest.Fill(ev.track_x, ev.track_y, factor*(ev.integral50 - pedestal - ev.avrg_first_chn2))
+            try:
+                avrg_chn2 = ev.avrg_first_chn2
+            except:
+                avrg_chn2 = 0
+            h_3d_chn2offest.Fill(ev.track_x, ev.track_y, factor*(ev.integral50 - pedestal - avrg_chn2))
         
             # fill all the time histograms with the integral
             h_time_2d           .Fill(rel_time, factor*(ev.integral50 - pedestal))
-            h_time_2d_chn2offset.Fill(rel_time, factor*(ev.integral50 - pedestal - ev.avrg_first_chn2))
+            h_time_2d_chn2offset.Fill(rel_time, factor*(ev.integral50 - pedestal - 0))
         
         # re-open file for writing
         infile.ReOpen('UPDATE')
@@ -443,8 +459,7 @@ if __name__ == "__main__":
             if r.pedestal_run == my_run.number:
                 r.pedestal = pedestal
                 RunInfo.update_run_info(r)
-        #RunInfo.dump('runs.json')
-        
+
         
     else:
         print '------------------------------------'
@@ -455,8 +470,8 @@ if __name__ == "__main__":
             ped_run = my_run.pedestal_run
 
         ROOT.gROOT.SetBatch()
-        # makeXYPlots(h_3d)
-        b = makeTimePlots(h_time_2d)
+        makeXYPlots(h_3d)
+        #b = makeTimePlots(h_time_2d)
 
     infile.Close()
 
