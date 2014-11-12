@@ -6,6 +6,30 @@ import ROOT, copy
 from array import array
 from ROOT import RooFit, RooRealVar, RooGaussian, RooLandau, RooDataSet, RooArgList, RooTreeData, RooFFTConvPdf, RooDataHist
 
+
+def irr(diamond):
+    if diamond in ['IIa-2', 'IIa-3', 'S30']:
+        return 'n-irr.'
+    if diamond in ['S129', 'IIa-1', 'IIa-5']:
+        return 'non-irr.'
+    if diamond in ['S125', 'S66']:
+        return 'p-irr.'
+    else:
+        return 'foobar'
+
+
+def addDiamondInfo(x1, y1, x2, y2, my_run):
+    pave = ROOT.TPaveText(x1, y1, x2, y2, 'NDC')
+    pave.SetTextAlign(12)
+    pave.SetTextFont(82)
+    pave.SetFillColor(0)
+    pave.AddText(my_run.diamond+'\t'+irr(my_run.diamond))
+    pave.AddText('bias: '+str(my_run.bias_voltage)+' V')
+    # pave.AddText('rate: '+rate)
+    pave.AddText('rate: %4.1e kHz/cm^{2}' %(float(my_run.get_rate())/1000.))
+
+    return pave
+
 def median(ls):
     sls = sorted(ls)
     length = len(ls)
