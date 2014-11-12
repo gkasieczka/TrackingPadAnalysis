@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import argparse
 import math, sys, os
 from RunInfo import RunInfo
 from subprocess import call
@@ -11,40 +12,54 @@ import subprocess
 import multiprocessing
 import datetime
 import ROOT
+import DataTypes
 ROOT.gROOT.SetBatch()
 
-reanalyze = False
-do_pedestal = False
-do_data     = False
-reload = False
-nProcesses = 12
+parser = argparse.ArgumentParser()
+parser.add_argument('-p','--pedestal', dest='do_pedestal', action='store_true',
+                   default = False,
+                   help='Analyse pedestals')
+parser.add_argument('-d','--data', dest='do_data', action='store_true',
+                   default = False,
+                   help='Analyse data')
+parser.add_argument('-b','--bias', dest='do_bias', action='store_true',
+                   default = False,
+                   help='Analyse bias')
+parser.add_argument('-f','--reanalyze', dest='reanalyze', action='store_true',
+                   default = False,
+                   help='Reanalyze')
+parser.add_argument('-ff','--reload', dest='reload', action='store_true',
+                   default = False,
+                   help='Reload')
+parser.add_argument('-a','--all', action='store_true',
+                   default = False,
+                   help='Analyse all')
+parser.add_argument('-j','--jobs', default = 10,
+                   help='Set jobs')
 
-args = sys.argv
 
-if 'reload' in args:
-    reload = True
-if 'reanalyze' in args:
-    reanalyze = True
-
-if 'pedestal' in args or 'ped' in args or 'p' in args:
-    do_pedestal = True
-if 'data' in args:
-    do_data = True
-if 'both' in args:
-    do_data = True
-    do_pedestal = True
-
-# if do_pedestal and do_data:
-#     print 'you can do either pedestal or data, not both!'
-#     print 'don\'t be greedy'
-#     sys.exit()
+args = parser.parse_args()
+if args.all:
+    args.do_pedestal = True
+    args.do_data = True
+    args.do_bias = True
+print args
+reanalyze = args.reanalyze
+do_pedestal = args.do_pedestal
+do_data     = args.do_data
+do_bias = args.do_bias
+reload = args.reload
+print args.jobs,type(args.jobs)
+nProcesses = int(args.jobs)
+print nProcesses, type(nProcesses)
 
 print 'pedestal: ',do_pedestal
-print 'data: ',do_data
-print 'reload: ',reload
+print 'data:     ',do_data
+print 'bias:     ',do_bias
+print 'reload:   ',reload
 print 'reanalyze:',reanalyze
 
-if not do_pedestal and not do_data:
+if not do_pedestal and not do_data and not do_bias:
     print 'you have to specify either \'data\' or \'pedestal\''
     print 'don\'t be modest'
     sys.exit()
