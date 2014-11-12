@@ -15,7 +15,8 @@ import types as t
 from Initializer import initializer
 from MaskInfo import MaskInfo
 from DataTypes import data_types
-import portalocker
+# import portalocker
+from lockfile import LockFile
 import os
 
 
@@ -35,6 +36,7 @@ class RunInfo:
     #  -newly created objects register automatically
     #  -keys = run number
     runs = {}
+    locked = False
 
     # initializer - a member variable is automatically created
     #  for each argument of the constructor
@@ -176,20 +178,29 @@ class RunInfo:
     @classmethod
     def dump(cls, filename):
         print 'write new json file'
-        f = open(filename, "w")
-        # portalocker.lock(file, portalocker.LOCK_EX)
-        # portalocker.lock(file, portalocker.LOCK_SH)
-        f.write(json.dumps(cls.runs,
-                           default=lambda o: o.__dict__,
-                           sort_keys=True,
-                           indent=4))
-        f.close()
+        lock = LockFile(filename)
+        with lock:
+                f = open(filename, "w")
+                # portalocker.lock(file, portalocker.LOCK_EX)
+                # portalocker.lock(file, portalocker.LOCK_SH)
+                f.write(json.dumps(cls.runs,
+                                   default=lambda o: o.__dict__,
+                                   sort_keys=True,
+                                   indent=4))
+                f.close()
 
     # End of to_JSON
 
     # Read all RunInfos from a file and use to intialize objects
     @classmethod
     def load(cls, filename):
+        lock = LockFile(filename)
+        i = 0
+        while lock.is_locked():
+            i+=1
+            time.sleep(.01)
+            if i%100==0:
+                print 'waiting to be unlocked'
         # first get the dictionary from the file..
         f = open(filename, "r")
         data = json.load(f)
@@ -208,3 +219,4 @@ if __name__ == "__main__":
     if os.path.isfile(fname):
         print 'Load RunInfo: ', fname
         RunInfo.load(fname)
+        RunInfo.dump(fname)
