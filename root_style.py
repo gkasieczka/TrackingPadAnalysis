@@ -7,6 +7,7 @@ def ensure_dir(f):
 
 class root_style(object) :
     def __init__(self) :
+        ROOT.gErrorIgnoreLevel = 3001
         # ROOT.gROOT.SetBatch(1)
         self.marg_top = 50.
         self.marg_bot = 130.
@@ -176,6 +177,29 @@ class root_style(object) :
 
         ROOT.gStyle.cd();
 
+    def make_pad(self, which):
+        # which = 'plot' for plot pad above ratio, 'ratio' for ratio pad, 'tot' for pad without ratio
+
+        pad = ROOT.TPad('p', 'p', 0.0, 0.0, 1.0, 1.0, 0, 0)
+
+        if which == 'plot':
+            pad.SetPad(0.0, 0.3, 1.0, 1.0)
+            pad.SetBorderSize(0)
+            pad.SetBottomMargin(0.0)
+            pad.SetLeftMargin(0.17)
+            pad.SetTicks(1,1)
+
+        if which == 'ratio':
+            pad.SetPad(0.0, 0.0, 1.0, 0.3)
+            pad.SetBorderSize(0)
+            pad.SetTopMargin(0.0)
+            pad.SetBottomMargin(0.47)
+            pad.SetLeftMargin(0.17)
+            pad.SetTicks(1,1)
+        pad.Draw()
+        return pad
+ 
+
     def get_canvas(self,name):
         canvas = ROOT.TCanvas(name,'',self.width,self.height)
         canvas.UseCurrentStyle()
@@ -186,9 +210,11 @@ class root_style(object) :
         fname = self.main_dir
         if not fname.endswith('/'):
             fname+='/'
-        fname += 'output/%s/'+name+'.%s'
+        fname += '%s/'+name+'.%s'
         ftypes = ['png','pdf','eps','root','tex']
         for f in ftypes:
             ensure_dir(fname%(f,f))
-            canvas.SaveAs(fname%(f,f))
+            fn = fname%(f,f)
+            print '\t%s'%(fn)
+            canvas.SaveAs(fn)
 
