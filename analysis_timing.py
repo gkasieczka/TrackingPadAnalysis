@@ -4,6 +4,10 @@ import ROOT
 import math, sys, os
 from RunInfo import RunInfo
 from subprocess import call
+import root_style
+
+this_style = root_style.root_style()
+this.style.set_style(1000,1000,1)
 
 def modification_date(filename):
     t = os.path.getmtime(filename)
@@ -85,20 +89,23 @@ print 'old_runs',old_runs
 for ev in sorted(bad_events.keys()):
     print x_labels[ev],': ',sorted(bad_events[ev]),'\n'
 ROOT.gStyle.SetOptStat(0)
-c1 = ROOT.TCanvas()
+c1 = this_style.get_canvas('timimng_analysis')
 c1.cd()
 
 h_event_fraction.Draw()
-c1.SaveAs('output/evenfraction.png')
+this_style.main_dir('./output/')
+this_style.save_canvas(c1,'eventfraction')
 
 h_event_fraction_vs_type.Draw('colz')
-c1.SaveAs('output/eventfraction_vs_type.png')
+this_style.save_canvas(c1,'eventfraction_vs_type')
 
 h_analysis_status.SetMarkerSize(h_analysis_status.GetMarkerSize()*2.)
 h_analysis_status.SetMaximum(1.2*h_analysis_status.GetMaximum())
 h_analysis_status.Draw('text00hist')
-c1.SaveAs('output/h_analysis_status.png')
+this_style.save_canvas(c1,'analysis_status')
+
 h_event_fraction_vs_rate.Draw('colztext')
+this_style.save_canvas(c1,'event_fraction_vs_rate')
 c1.SaveAs('output/h_event_fraction_vs_rate.png')
 # print 'no data: ',n_no_data,'of',len(RunInfo.runs)
 #
