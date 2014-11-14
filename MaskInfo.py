@@ -114,5 +114,5 @@ if __name__ == "__main__":
         MaskInfo.load(fname)
 
     # MaskInfo(1, "IIa-2", 2518, -1, 65, 79, 1, 50, 1, 50, 1, 50, -0.2, 0.2, 0., 0.4)
-    MaskInfo.dump(fname)
+    # MaskInfo.dump(fname)
     print MaskInfo.masks
