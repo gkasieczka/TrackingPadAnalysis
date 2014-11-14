@@ -19,6 +19,15 @@ class root_style(object) :
         self.height = 0
         self.main_dir = '.'
 
+    def print_margins(self):
+        print 'root_style with canvas of size: {width} x{height} and margins {marg_left}, {marg_bot}, {marg_right}, {marg_top}'.format(
+            width = self.width,
+            height = self.height,
+            marg_left = self.marg_left,
+            marg_right = self.marg_right,
+            marg_top = self.marg_top,
+            marg_bot = self.marg_bot
+        )
 
     def make_legend(self,X1,Y2, nentries):
         width = 0.3
@@ -145,14 +154,14 @@ class root_style(object) :
         ##g ROOT.gStyle.SetTitleYSize(Float_t size = 0.02);
         ROOT.gStyle.SetTitleXOffset(1.33);
         ROOT.gStyle.SetTitleYOffset(1+.27*ratio);
-        ROOT.gStyle.SetTitleOffset(1.4, "Z"); ##g Another way to set the Offset
+        ROOT.gStyle.SetTitleOffset(1, "Z"); ##g Another way to set the Offset
 
         ##g For the axis labels:
 
         ROOT.gStyle.SetLabelColor(ROOT.kBlack, "XYZ");
         ROOT.gStyle.SetLabelFont(42, "XYZ");
         ROOT.gStyle.SetLabelOffset(0.010, "XYZ");
-        ROOT.gStyle.SetLabelOffset(0.1, "Z");
+        ROOT.gStyle.SetLabelOffset(0.01, "Z");
         ROOT.gStyle.SetLabelSize(0.04, "XYZ");
 
         ##g For the axis:
@@ -174,28 +183,38 @@ class root_style(object) :
         ##gLegend
         ROOT.gStyle.SetLegendFont(42);
 
+        #TextFonts
+        ROOT.gStyle.SetTextFont(42)
+        ROOT.gStyle.SetTextSize(0.04)
+
 
         ROOT.gStyle.cd();
 
-    def make_pad(self, which):
+    def make_pad(self, which,option=''):
         # which = 'plot' for plot pad above ratio, 'ratio' for ratio pad, 'tot' for pad without ratio
 
         pad = ROOT.TPad('p', 'p', 0.0, 0.0, 1.0, 1.0, 0, 0)
+        if 'logx' in option.lower():
+            pad.SetLogx()
 
         if which == 'plot':
-            pad.SetPad(0.0, 0.3, 1.0, 1.0)
+            # pad.SetPad(0.0, 0.3, 1.0, 1.0)
+            pad.SetPad(0.0, 0.0, 1.0, .87)
             pad.SetBorderSize(0)
-            pad.SetBottomMargin(0.0)
+            pad.SetBottomMargin(0.17)#0.47)
             pad.SetLeftMargin(0.17)
+            pad.SetTopMargin(0.0)
             pad.SetTicks(1,1)
 
         if which == 'ratio':
-            pad.SetPad(0.0, 0.0, 1.0, 0.3)
+            # pad.SetPad(0.0, 0.0, 1.0, 0.3)
+            pad.SetPad(0.0, 0.88, 1.0, 1.0)
             pad.SetBorderSize(0)
-            pad.SetTopMargin(0.0)
-            pad.SetBottomMargin(0.47)
+            pad.SetBottomMargin(0.0)
+            pad.SetTopMargin(0.05)
             pad.SetLeftMargin(0.17)
             pad.SetTicks(1,1)
+            pad.SetFillStyle(0)
         pad.Draw()
         return pad
  
@@ -206,7 +225,10 @@ class root_style(object) :
         return canvas
 
     def save_canvas(self,canvas,name):
+        # canvas.
+        canvas.UseCurrentStyle()
         canvas.Update()
+
         fname = self.main_dir
         if not fname.endswith('/'):
             fname+='/'
