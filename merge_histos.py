@@ -2,7 +2,6 @@ import ROOT
 import argparse
 from root_style import root_style
 from merge_histos_helper import *
-
 import RunInfo
 
 parser = argparse.ArgumentParser(description='Merge the histos')
@@ -63,7 +62,6 @@ elif 'bias' in args.dir or 'voltage' in args.dir:
     is_bias_scan = True
 print 'bias scan:',is_bias_scan
 print 'rate scan:',is_rate_scan
-
 
 for b in bias_voltages:
     print b, filter(lambda i: RunInfo.RunInfo.runs[i].bias_voltage == b,histos.keys())

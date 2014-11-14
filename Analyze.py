@@ -54,6 +54,25 @@ def saveCanvas(c1,name):
     this_style.save_canvas(c1,name[-1])
 
 
+def ensure_dir(f):
+    d = os.path.dirname(f)
+    if not os.path.exists(d):
+        os.makedirs(d)
+
+def saveCanvas(c1,name):
+    #print 'Save Canvas:',name
+    name = name.split('/')
+    fdir = '/'.join(name[:-1])
+    exts = ['pdf','eps','tex','root','png']
+    #print '\t',name
+    for ext in exts:
+        fname= fdir+'/{ext}/{name}.{ext}'.format(ext=ext,name=name[-1])
+        #print '\t',fname
+        ensure_dir(fname)
+        c1.SaveAs(fname)
+    #raw_input()
+
+
 def getPedestalValue(hist):
     tmp_hist = copy.deepcopy(hist.ProjectionY())
     rms = tmp_hist.GetRMS()
@@ -107,6 +126,7 @@ def makeTimePlots(h_time_2d):
     fit_res[-1].Draw()
     saveCanvas(c0,targetdir+'/'+'histo_'+prefix)
     # return
+
     arr = ROOT.TObjArray()
     h_time_2d.FitSlicesY(func, 0, -1, 0, 'QNR', arr)
 
@@ -139,10 +159,8 @@ def makeTimePlots(h_time_2d):
     h_time_2d.Draw('colz')
 
     pave = ah.addDiamondInfo(0.02, 0.02, 0.15, 0.11, my_run)
-
     mpvs.Draw('same pe')
     pave.Draw()
- 
     saveCanvas(c0,targetdir+'/'+'time_2d'+prefix)
     return arr
 
@@ -469,7 +487,6 @@ if __name__ == "__main__":
             # fill all the time histograms with the integral
             h_time_2d           .Fill(rel_time, signal)
             h_time_2d_chn2offset.Fill(rel_time, signal_chn2)
-
         # re-open file for writing
         infile.ReOpen('UPDATE')
         infile.cd()
@@ -495,8 +512,6 @@ if __name__ == "__main__":
             if r.pedestal_run == my_run.number:
                 r.pedestal = pedestal
                 RunInfo.update_run_info(r)
-
-        
     else:
         print '------------------------------------'
         print '--- this is a data run -------------'

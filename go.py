@@ -57,6 +57,7 @@ print 'pedestal: ',do_pedestal
 print 'data:     ',do_data
 print 'bias:     ',do_bias
 print 'reload:   ',reload
+
 print 'reanalyze:',reanalyze
 
 if not do_pedestal and not do_data and not do_bias:
@@ -102,7 +103,6 @@ if do_pedestal:
     for run in ped_not:
         cmd = 'python Analyze.py reload '+str(run)
         commands.append((run,cmd))
-
 if do_data:
     dat_fail_no_timing = []
     dat_fail_no_pedestal = []
@@ -127,7 +127,6 @@ if do_data:
     print 'and %3d / %3d  runs due to missing timing:\n\t'%(len(dat_fail_no_timing),runs[data_type]),dat_fail_no_timing
     print '\nthese are the %3d / %3d  data runs which will be analyzed:\n\t'%(len(dat_not),runs[data_type]),dat_not
     raw_input('Press enter to continue.')
-
     for run in dat_not:
         cmd = 'python Analyze.py '
         if reload:

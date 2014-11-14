@@ -102,6 +102,7 @@ this_style.save_canvas(c1,'eventfraction_vs_type')
 h_analysis_status.SetMarkerSize(h_analysis_status.GetMarkerSize()*2.)
 h_analysis_status.SetMaximum(1.2*h_analysis_status.GetMaximum())
 h_analysis_status.Draw('text00hist')
+
 this_style.save_canvas(c1,'analysis_status')
 
 h_event_fraction_vs_rate.Draw('colztext')
