@@ -22,7 +22,13 @@ def usage():
     print '    ./Analyze.py <runnumber>'
     return
 
-
+ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.WARNING)
+ROOT.RooMsgService.instance().getStream(1).removeTopic(ROOT.RooFit.Eval)
+ROOT.RooMsgService.instance().getStream(1).removeTopic(ROOT.RooFit.Minimization)
+ROOT.RooMsgService.instance().getStream(1).removeTopic(ROOT.RooFit.Plotting)
+ROOT.RooMsgService.instance().getStream(1).removeTopic(ROOT.RooFit.Fitting)
+ROOT.RooMsgService.instance().setSilentMode(True)
+ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.FATAL)
 ###############################
 # set the palette to 53
 ###############################
@@ -53,11 +59,17 @@ def getPedestalValue(hist):
     rms = tmp_hist.GetRMS()
     mp = tmp_hist.GetBinCenter(tmp_hist.GetMaximumBin())
     func = ROOT.TF1('gaus_fit','gaus',mp-rms/2,mp+rms/2)
-    tmp_hist.Fit(func,'','',mp-rms/2,mp+rms/2)
+    tmp_hist.Fit(func,'Q','',mp-rms/2,mp+rms/2)
     central = func.GetParameter(1)
     c0 = ROOT.TCanvas('foo', 'bar', 600, 600)
-    ## tmp_hist.Draw('')
-    ## func.Draw('same')
+    tmp_hist.Draw('')
+    tmp_hist.GetXaxis().SetTitle('signal in adc')
+    lat = ROOT.TLatex()
+    lat.SetNDC()
+    lat.DrawLatex(0.5, 0.03, 'pedestal')
+    func.Draw('same')
+    pave = ah.addDiamondInfo(0.02, 0.02, 0.15, 0.11, my_run)
+    pave.Draw()
     saveCanvas(c0,targetdir+'/'+'pedestal_'+prefix)
     return central
     
@@ -78,7 +90,9 @@ def makeTimePlots(h_time_2d):
     land = copy.deepcopy(h_time_2d.ProjectionY())
     # land.Fit(func)
     fit_res = ah.fitLandauGaus(land, True)
-    c0 = ROOT.TCanvas('time_canvas', 'Canvas of the time evolution', 1200, 600)
+    this_style.set_style(1200,600,1/2.)
+    c0 = this_style.get_canvas('time_canvas')
+    # c0 = ROOT.TCanvas('time_canvas', 'Canvas of the time evolution', 1200, 600)
     c0.cd()
     ### if neg_landau:
     ###     land.GetXaxis().SetRangeUser(-250,0)
@@ -87,12 +101,12 @@ def makeTimePlots(h_time_2d):
     ### land.Draw()
     ### c0.SaveAs(targetdir+'/'+prefix+'_landau.pdf')
     #land.Draw()
+    this_style.print_margins()
     fit_res[2].Draw()
     saveCanvas(c0,targetdir+'/'+'landauGaus_'+prefix)
     fit_res[-1].Draw()
     saveCanvas(c0,targetdir+'/'+'histo_'+prefix)
     # return
-
     arr = ROOT.TObjArray()
     h_time_2d.FitSlicesY(func, 0, -1, 0, 'QNR', arr)
 
@@ -113,6 +127,7 @@ def makeTimePlots(h_time_2d):
     h_time_2d.SetTitle('Time evolution of the signal pulse')
     # x-axis
     h_time_2d.GetXaxis().SetTitle('minutes')
+    if my_run.data_type == 3: h_time_2d.GetXaxis().SetTitle('n*10 minutes')
     h_time_2d.GetXaxis().SetTitleSize(0.05)
     h_time_2d.GetXaxis().SetLabelSize(0.05)
 
@@ -120,10 +135,10 @@ def makeTimePlots(h_time_2d):
     h_time_2d.GetYaxis().SetTitle('pulse height')
     h_time_2d.GetYaxis().SetLabelSize(0.05)
     h_time_2d.GetYaxis().SetTitleSize(0.05)
-    h_time_2d.GetYaxis().SetRangeUser(-50,300)
+    h_time_2d.GetYaxis().SetRangeUser(-50,400)
     h_time_2d.Draw('colz')
 
-    pave = ah.addDiamondInfo(0.1, 0.7, 0.35, 0.9, my_run)
+    pave = ah.addDiamondInfo(0.02, 0.02, 0.15, 0.11, my_run)
 
     mpvs.Draw('same pe')
     pave.Draw()
@@ -175,7 +190,7 @@ def makeXYPlots(h_3d):
                 continue
             counter += 1
             # if counter > 3: continue
-            print 'counter:', counter
+            # print 'counter:', counter
             #print 'at xbin %d and ybin %d' %(xbin, ybin)
             #z_histo.Fit('landau','q')
             fit_res = ah.fitLandauGaus(z_histo)
@@ -263,7 +278,7 @@ if __name__ == "__main__":
     print 'argv:',sys.argv
     my_rn  = int([i for i in sys.argv if i.isdigit() == True][0]) ## search for the first number in the list of arguments
     my_run = RunInfo.runs[my_rn]
-    print my_run.__dict__
+    # print my_run.__dict__
 
     ###############################
     # check if timing went alright
@@ -284,8 +299,13 @@ if __name__ == "__main__":
     ###############################
     
     # adapt these lines to find the right file eventually
-    infile = ROOT.TFile('results/run_'+str(my_rn)+'/track_info.root','READ')
+    fname = 'results/run_'+str(my_rn)+'/track_info.root'
+    print fname
+    if not os.path.isfile(fname):
+        raise Exception('Cannot find File %s'%fname)
+    infile = ROOT.TFile(fname,'READ')
     my_tree = infile.Get('track_info')
+    print my_tree
 
     n_ev = my_tree.GetEntries()
     
@@ -317,7 +337,7 @@ if __name__ == "__main__":
         runtype = 'voltage-scan'
         prefix  = my_run.diamond+'-run-'+'%03d'%(my_rn)+'-'+volt_str+'-'+rate+'-voltage'
     elif my_run.data_type == 3:
-        runtype = 'long-run'
+        runtype = 'rate-scan'
         prefix  = my_run.diamond+'-run-'+'%03d'%(my_rn)+'-'+volt_str+'-'+rate+'-data-long'
     else:
         runtype = 'other'
@@ -381,9 +401,16 @@ if __name__ == "__main__":
             time_binning = 600.
 
         my_tree.GetEntry(0)
-        time_first = my_tree.t_pad
+        try:
+            time_first = my_tree.timestamp
+        except:
+            time_first = my_tree.t_pad
         my_tree.GetEntry(n_ev-1)
-        time_last  = my_tree.t_pad
+
+        try:
+            time_last = my_tree.timestamp
+        except:
+            time_first = my_tree.t_pad
         length = time_last - time_first
         mins = length/time_binning
 
@@ -417,28 +444,37 @@ if __name__ == "__main__":
                     warnings.warn('cannot find delays for this run')
                 n_wrong_delay+=1
             ########################################
-
-            rel_time = int( (ev.t_pad - time_first) / time_binning) ## change to t_pad 
+            try:
+                now = ev.timestamp
+            except:
+                now = ev.t_pad
+            rel_time = int( (now - time_first) / time_binning) ## change to t_pad
             if my_run.bias_voltage>0:
                 factor = -1.0
             else:
                 factor = 1.0
-        
-            # fill the 3D histogram
-            h_3d           .Fill(ev.track_x, ev.track_y, factor*(ev.integral50 - pedestal))
+
             try:
                 avrg_chn2 = ev.avrg_first_chn2
             except:
                 avrg_chn2 = 0
-            h_3d_chn2offest.Fill(ev.track_x, ev.track_y, factor*(ev.integral50 - pedestal - avrg_chn2))
+            signal = factor*(ev.integral50 - pedestal)
+            signal_chn2 = factor*(ev.integral50 - pedestal - avrg_chn2)
+            # print rel_time,signal
+            # fill the 3D histogram
+            h_3d           .Fill(ev.track_x, ev.track_y, signal)
+
+            h_3d_chn2offest.Fill(ev.track_x, ev.track_y, signal_chn2)
         
             # fill all the time histograms with the integral
-            h_time_2d           .Fill(rel_time, factor*(ev.integral50 - pedestal))
-            h_time_2d_chn2offset.Fill(rel_time, factor*(ev.integral50 - pedestal - 0))
-        
+            h_time_2d           .Fill(rel_time, signal)
+            h_time_2d_chn2offset.Fill(rel_time, signal_chn2)
+
         # re-open file for writing
         infile.ReOpen('UPDATE')
         infile.cd()
+        # print 'h_time_2d',h_time_2d.GetEntries(),
+        # raw_input()
 
         h_3d.Write()
         h_time_2d.Write()
@@ -471,7 +507,7 @@ if __name__ == "__main__":
 
         ROOT.gROOT.SetBatch()
         makeXYPlots(h_3d)
-        #b = makeTimePlots(h_time_2d)
+        b = makeTimePlots(h_time_2d)
 
     infile.Close()
 
