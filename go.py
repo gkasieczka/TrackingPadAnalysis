@@ -106,9 +106,10 @@ if do_pedestal:
 if do_data:
     dat_fail_no_timing = []
     dat_fail_no_pedestal = []
-    data_type = DataTypes.data_types.keys()[DataTypes.data_types.values().index('DATA')]
+    data_types = [DataTypes.data_types.keys()[DataTypes.data_types.values().index('DATA')],
+                 DataTypes.data_types.keys()[DataTypes.data_types.values().index('LONG_RUN')]]
     for rn, r in RunInfo.runs.items():
-        if r.data_type == data_type:
+        if r.data_type in data_types:
             dat_all.append(rn)
             has_pedestal = not math.isnan(r.pedestal)
             has_timing   = r.calibration_event_fraction > 0.
