@@ -7,7 +7,7 @@ from subprocess import call
 import root_style
 
 this_style = root_style.root_style()
-this.style.set_style(1000,1000,1)
+this_style.set_style(1000,1000,1)
 
 def modification_date(filename):
     t = os.path.getmtime(filename)
@@ -93,7 +93,7 @@ c1 = this_style.get_canvas('timimng_analysis')
 c1.cd()
 
 h_event_fraction.Draw()
-this_style.main_dir('./output/')
+this_style.main_dir = './output/'
 this_style.save_canvas(c1,'eventfraction')
 
 h_event_fraction_vs_type.Draw('colz')
