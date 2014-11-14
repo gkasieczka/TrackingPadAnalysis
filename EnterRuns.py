@@ -11,14 +11,17 @@ from DataTypes import data_types
 import sys
 
 from RunInfo import RunInfo
-
+import ConfigParser
 
 ###############################
 # Get already saved runs
 ###############################
 
-runs_filename = "runs.json"
-RunInfo.load(runs_filename)
+
+parser = ConfigParser.ConfigParser()
+parser.read('TimingAlignment.cfg')
+runs_filename = parser.get('JSON','runs')
+RunInfo.load(runs_filename )
 
 
 ###############################
@@ -26,7 +29,7 @@ RunInfo.load(runs_filename)
 ###############################
 july_entered_runs = []
 for entry in RunInfo.runs:
-    if getattr(RunInfo.runs[entry],"test_campaign") == "PSI_July14":
+    if getattr(RunInfo.runs[entry],"test_campaign") == "PSI_Sept14":
         july_entered_runs.append(entry)
 #last_run_number = max(RunInfo.runs.keys())
 last_run_number = max(july_entered_runs)
