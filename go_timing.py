@@ -43,7 +43,7 @@ if do_timing:
         #     print 'fraction: ',r.calibration_event_fraction
         #     print 'time: ',r.time_timing_alignment,' ',d,' ', r.time_timing_alignment < d
         # if r.calibration_event_fraction < 0
-        if r.calibration_event_fraction > 0 and r.time_timing_alignment < d:
+        if r.calibration_event_fraction < 0.5 or r.time_timing_alignment < d:
             timing_all.append(rn)
             # if math.isnan(r.pedestal) and r.calibration_event_fraction > 0.:
             #     ped_not.append(rn)
