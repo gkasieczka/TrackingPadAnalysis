@@ -18,7 +18,7 @@ from DataTypes import data_types
 # import portalocker
 from lockfile import LockFile
 import os
-
+import math
 
 def signum(x):
     return (x > 0) - (x < 0)
@@ -148,12 +148,17 @@ class RunInfo:
             }
         }
         if not self.test_campaign in rates:
-            return -1
+            return 1
         if not (self.fsh13,self.fs11) in rates[self.test_campaign]:
-            return -2
+            return 2
         return rates[self.test_campaign][(self.fsh13,self.fs11)]
 
-
+    def get_rate_string(self):
+        rate = self.get_rate()
+        factor = int(math.log10(rate))/3*3
+        factor_strings = {0:'',3:'k',6:'M',9:'G',12:'P'}
+        rate = rate/10**factor
+        return '%3.1f %sHz/cm^{2}'%(rate,factor_strings[factor])
 
     # End of __init__
     @staticmethod
