@@ -26,8 +26,11 @@ def addDiamondInfo(x1, y1, x2, y2, my_run):
     pave.AddText(my_run.diamond+'\t'+irr(my_run.diamond))
     pave.AddText('bias: '+str(my_run.bias_voltage)+' V')
     # pave.AddText('rate: '+rate)
-    pave.AddText('rate: %4.1e kHz/cm^{2}' %(float(my_run.get_rate())/1000.))
-
+    pave.AddText('rate: %s' %(my_run.get_rate_string()))
+    pave.SetShadowColor(0)
+    pave.SetBorderSize(0)
+    pave.SetTextFont(42)
+    pave.SetTextSize(0.04)
     return pave
 
 def median(ls):
@@ -134,9 +137,9 @@ def fitLandauGaus(hist, full = False):
     hist2.Fit(flandau2,'Q+')#,'same',mp-20,mp+40)
     for i in range(flandau.GetNpar()):
         hist2.GetFunction('flandau2').SetParameter(i,flandau.GetParameter(i))
-
-    for i in range(flandau.GetNpar()):
-        print flandau.GetParameter(i),flandau2.GetParameter(i)
+    if False:
+        for i in range(flandau.GetNpar()):
+            print flandau.GetParameter(i),flandau2.GetParameter(i)
 
     x   = RooRealVar('x', 'signal / adc', 0,500)
     x.setRange("signal",mp - 40, mp+90)
@@ -166,18 +169,18 @@ def fitLandauGaus(hist, full = False):
     
     ## Construct landau (x) gauss
     lxg = RooFFTConvPdf('lxg','landau (x) gaus', x, landau, gaus)
-    lxg.fitTo(dh,RooFit.Range("signal"))
+    lxg.fitTo(dh,RooFit.Range("signal"), RooFit.PrintEvalErrors(-1))
     #,RooFit.Normalization(ROOT.RooAbsReal.NumEvent,1))
     a = lxg.getParameters(dh)
-
-    print 'fit par0                                     %+6.1f'%flandau.GetParameter(0)
-    print 'fit par1                                     %+6.1f'%flandau.GetParameter(1)
-    print 'fit par2                                     %+6.1f'%flandau.GetParameter(2)
-    print 'mp                                           %+6.1f'%mp
-    print 'rms                                          %+6.1f'%rms
-    print 'lxg.getParameters(dh).getRealValue(\'ml\'):  %+6.1f'% a.getRealValue('ml')
-    print 'lxg.getParameters(dh).getRealValue(\'sl\'):  %+6.1f'% a.getRealValue('sl')
-    print 'lxg.getParameters(dh).getRealValue(\'sg\'):  %+6.1f'% a.getRealValue('sg')
+    if False:
+        print 'fit par0                                     %+6.1f'%flandau.GetParameter(0)
+        print 'fit par1                                     %+6.1f'%flandau.GetParameter(1)
+        print 'fit par2                                     %+6.1f'%flandau.GetParameter(2)
+        print 'mp                                           %+6.1f'%mp
+        print 'rms                                          %+6.1f'%rms
+        print 'lxg.getParameters(dh).getRealValue(\'ml\'):  %+6.1f'% a.getRealValue('ml')
+        print 'lxg.getParameters(dh).getRealValue(\'sl\'):  %+6.1f'% a.getRealValue('sl')
+        print 'lxg.getParameters(dh).getRealValue(\'sg\'):  %+6.1f'% a.getRealValue('sg')
 
     frame = x.frame(RooFit.Title('landau (x) gauss convolution'),RooFit.Range("draw"))
     #,RooFit.Normalization(ROOT.RooAbsReal.NumEvent,1))
