@@ -5,3 +5,6 @@
 *.pyc
 
 results
+output
+fitlog.txt
+missing_masks.txt
