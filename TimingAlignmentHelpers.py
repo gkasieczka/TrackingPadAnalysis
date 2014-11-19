@@ -251,7 +251,9 @@ def find_alignment(run, tree_pixel, tree_pad, branch_names, c, output_dir='./res
     ensure_dir(result_dir)
     print result_dir
 
-    RunInfo.load('runs.json')
+    parser = ConfigParser.ConfigParser()
+    parser.read('TimingAlignment.cfg')
+    RunInfo.load(parser.get('JSON','runs'))
 
     max_align_pad = 10
     max_align_pixel = 40
@@ -375,7 +377,9 @@ def find_alignment(run, tree_pixel, tree_pad, branch_names, c, output_dir='./res
 
 def analyze(run, action, tree_pixel, tree_pad, branch_names, c, output_dir="./results"):
     ensure_dir(output_dir + '/')
-    RunInfo.load('runs.json')
+    parser = ConfigParser.ConfigParser()
+    parser.read('TimingAlignment.cfg')
+    RunInfo.load(parser.get('JSON','runs'))
 
     if run not in RunInfo.runs:
         raise Exception('cannot find run {run} in RunInfo json - Please add run first'.format(run=run))
