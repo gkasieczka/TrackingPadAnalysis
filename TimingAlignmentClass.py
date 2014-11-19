@@ -8,7 +8,7 @@ import array
 import math
 from RunInfo import RunInfo
 import time
-
+import ConfigParser
 try:
     import progressbar
 
@@ -140,6 +140,7 @@ class TimingAlignment:
         ROOT.gROOT.SetBatch()
         ROOT.gErrorIgnoreLevel = 2001
         self.verbose = False
+        self.no_candidates = False
         pass
 
     @staticmethod
@@ -244,7 +245,9 @@ class TimingAlignment:
         self.final_t_pixel = getattr(self.tree_pixel, self.branch_names["t_pixel"])
 
     def initialize_analysis(self):
-        RunInfo.load('runs.json')
+        parser = ConfigParser.ConfigParser()
+        parser.read('TimingAlignment.cfg')
+        RunInfo.load(parser.get('JSON','runs'))
         if self.run not in RunInfo.runs:
             raise Exception('cannot find run {run} in RunInfo json - Please add run first'.format(run=self.run))
         this_info = RunInfo.runs[self.run]
@@ -337,7 +340,9 @@ class TimingAlignment:
 
     def find_first_alignment(self):
         c = ROOT.TCanvas()
-        RunInfo.load('runs.json')
+        parser = ConfigParser.ConfigParser()
+        parser.read('TimingAlignment.cfg')
+        RunInfo.load(parser.get('JSON','runs'))
         max_align_pad = 10
         max_align_pixel = 80
         if self.run not in RunInfo.runs:
@@ -446,11 +451,15 @@ class TimingAlignment:
         if len(li_residuals_rms) == 0:
             self.run_timing.calibration_event_fraction = -6.0
             RunInfo.update_run_info(self.run_timing)
-            raise Exception('did not find any candidate')
-        if self.verbose:
-            print sorted(li_residuals_rms, key=lambda x: abs(x[index_rms]))
-        best_i_align_pixel = sorted(li_residuals_rms, key=lambda x: abs(x[index_rms]))[0][index_pixel]
-        best_i_align_pad = sorted(li_residuals_rms, key=lambda x: abs(x[index_rms]))[0][index_pad]
+            self.no_candidates = True
+            best_i_align_pixel = 0
+            best_i_align_pad = 0
+            print ('did not find any candidate')
+        else:
+            if self.verbose:
+                print sorted(li_residuals_rms, key=lambda x: abs(x[index_rms]))
+            best_i_align_pixel = sorted(li_residuals_rms, key=lambda x: abs(x[index_rms]))[0][index_pixel]
+            best_i_align_pad = sorted(li_residuals_rms, key=lambda x: abs(x[index_rms]))[0][index_pad]
 
 
         print "Best pad / pixel event for alignment: ", best_i_align_pad, best_i_align_pixel
@@ -477,13 +486,15 @@ class TimingAlignment:
 
             self.tree_pad.GetEntry(i_pad-1)
             time_pad = getattr(self.tree_pad, self.branch_names["t_pad"])
-
-            best_match = self.find_associated_pixel_event(i_pixel, time_pad)
-            
+            if self.f_pixel:
+                best_match = self.find_associated_pixel_event(i_pixel, time_pad)
+            else:
+                best_match = [[i_pad, 0, time_pad]]
             delta_pixel = -1* i_pixel
             i_pixel = best_match[0]
             delta_pixel += i_pixel
-            self.tree_pixel.GetEntry(i_pixel)
+            if self.f_pixel:
+                self.tree_pixel.GetEntry(i_pixel)
 
 
             # Check if we are happy with the timing
@@ -683,7 +694,9 @@ class TimingAlignment:
               '- {:6d} have Pixel Bit 15 [all Hit]'.format(total_calib_events,
                                                            calibEventsNoHit,
                                                            calibEventsFullHit)
-        if total_calib_events > 0:
+        if self.no_candidates:
+            fraction = -6.0
+        elif total_calib_events > 0:
             fraction = float(calibEventsNoHit) / float(total_calib_events) * 100.
         else:
             fraction = -2.0
