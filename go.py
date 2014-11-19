@@ -13,6 +13,8 @@ import multiprocessing
 import datetime
 import ROOT
 import DataTypes
+import ConfigParser
+
 ROOT.gROOT.SetBatch()
 
 parser = argparse.ArgumentParser()
@@ -65,7 +67,10 @@ if not do_pedestal and not do_data and not do_bias:
     print 'don\'t be modest'
     sys.exit()
 
-RunInfo.load('runs.json')
+
+parser = ConfigParser.ConfigParser()
+parser.read('TimingAlignment.cfg')
+RunInfo.load(parser.get('JSON','runs'))
 
 dat_not = []
 dat_all = []
@@ -98,7 +103,7 @@ if do_pedestal:
     print 'PEDESTAL'
     print 'these are the %d / %d  pedestal runs which will NOT be analyzed:\n\t'%(len(ped_fail),runs[data_type]),ped_fail
     print 'these are the %d / %d unanalyzed pedestal runs:\n\t'%(len(ped_not),runs[data_type]), ped_not
-    raw_input('Press enter to continue.')
+    #raw_input('Press enter to continue.')
 
     for run in ped_not:
         cmd = 'python Analyze.py reload '+str(run)
@@ -126,7 +131,7 @@ if do_data:
     print 'cannot analyze %3d / %3d runs,  due to missing pedestal:\n\t'%(len(dat_fail_no_pedestal),runs[data_type]),dat_fail_no_pedestal
     print 'and %3d / %3d  runs due to missing timing:\n\t'%(len(dat_fail_no_timing),runs[data_type]),dat_fail_no_timing
     print '\nthese are the %3d / %3d  data runs which will be analyzed:\n\t'%(len(dat_not),runs[data_type]),dat_not
-    raw_input('Press enter to continue.')
+    #raw_input('Press enter to continue.')
     for run in dat_not:
         cmd = 'python Analyze.py '
         if reload:
@@ -157,7 +162,7 @@ if do_bias:
     print 'cannot analyze %3d / %3d runs,  due to missing pedestal:\n\t'%(len(bias_fail_no_pedestal),runs[data_type]),bias_fail_no_pedestal
     print 'and %3d / %3d  runs due to missing timing:\n\t'%(len(bias_fail_no_timing),runs[data_type]),bias_fail_no_timing
     print '\nthese are the %3d / %3d  data runs which will be analyzed:\n\t'%(len(bias_not),runs[data_type]), bias_not
-    raw_input('Press enter to continue.')
+    #raw_input('Press enter to continue.')
 
     for run in bias_not:
         cmd = 'python Analyze.py '
@@ -166,7 +171,7 @@ if do_bias:
         cmd += str(run)
         commands.append((run,cmd))
 
-raw_input('start analysis with %d commands. press enter'%len(commands))
+#raw_input('start analysis with %d commands. press enter'%len(commands))
 pool = Pool(nProcesses)
 it = pool.imap_unordered(partial(call, shell=True), [c[1] for c in commands])
 failures = []
