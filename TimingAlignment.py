@@ -18,6 +18,7 @@ import ROOT
 from RunInfo import RunInfo
 
 import TimingAlignmentClass
+import ConfigParser
 
 # ##############################
 # Configuration
@@ -109,13 +110,17 @@ filename_pixel = format_pixel.format(basedir_pixel, run)
 f_pad = ROOT.TFile.Open(filename_pad)
 f_pixel = ROOT.TFile.Open(filename_pixel)
 if not f_pad:
-    RunInfo.load('runs.json')
+    parser = ConfigParser.ConfigParser()
+    parser.read('TimingAlignment.cfg')
+    RunInfo.load(parser.get('JSON','runs'))
     run_info = RunInfo.runs[run]
     run_info.calibration_event_fraction = -3.0
     RunInfo.update_run_info(run_info)
     raise Exception('Cannot find Pad File')
 if not f_pixel:
-    RunInfo.load('runs.json')
+    parser = ConfigParser.ConfigParser()
+    parser.read('TimingAlignment.cfg')
+    RunInfo.load(parser.get('JSON','runs'))
     run_info = RunInfo.runs[run]
     run_info.calibration_event_fraction = -4.0
     RunInfo.update_run_info(run_info)
@@ -142,7 +147,8 @@ if True:
         bias_voltage = args.voltage
         # TaH.RunTiming(run, diamond_name=diamond, bias_voltage=bias_voltage)
         TA.set_action(action)
-        TA.find_first_alignment()
+        if f_pixel:
+            TA.find_first_alignment()
         TA.set_action(1)
         TA.analyse()
         TA.set_action(0)
