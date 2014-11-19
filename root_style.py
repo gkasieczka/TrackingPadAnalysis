@@ -225,14 +225,16 @@ class root_style(object) :
         return canvas
 
     def save_canvas(self,canvas,name):
+
         # canvas.
-        canvas.UseCurrentStyle()
+        # canvas.UseCurrentStyle()
         canvas.Update()
 
         fname = self.main_dir
         if not fname.endswith('/'):
             fname+='/'
         fname += '%s/'+name+'.%s'
+        print 'saving canvas', fname
         ftypes = ['png','pdf','eps','root','tex']
         for f in ftypes:
             ensure_dir(fname%(f,f))
