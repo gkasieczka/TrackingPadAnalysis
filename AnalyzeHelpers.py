@@ -39,6 +39,9 @@ def median(ls):
     return sls[length/2]
 
 def mean(ls):
+    if len(ls) == 0: 
+        print 'trying to calculate the mean of an empty list'
+        return 0.
     tot = 0.
     for i in ls:
         tot = tot + i
@@ -125,7 +128,8 @@ def fitLandauGaus(hist, full = False):
     flandau.SetLineWidth(1)
     flandau.SetLineColor(ROOT.kBlue)
     hist2 = hist.Clone(hist.GetName()+'_2')
-    hist2.Scale(1./hist2.GetBinContent(hist2.GetMaximumBin()))
+    if hist2.GetBinContent(hist2.GetMaximumBin()):
+        hist2.Scale(1./hist2.GetBinContent(hist2.GetMaximumBin()))
     hist2.Fit(flandau,'Q','',mp-20,mp+40)
 
     flandau2 = flandau.Clone('flandau2')
@@ -136,7 +140,17 @@ def fitLandauGaus(hist, full = False):
         flandau2.SetParLimits(i,flandau.GetParameter(i),flandau.GetParameter(i))
     hist2.Fit(flandau2,'Q+')#,'same',mp-20,mp+40)
     for i in range(flandau.GetNpar()):
-        hist2.GetFunction('flandau2').SetParameter(i,flandau.GetParameter(i))
+        par_i = flandau.GetParameter(i)
+        # print i, par_i
+        if i == 0 and par_i == 0:
+            par_i = 1.0
+        if i == 2 and par_i == 0:
+            par_i == 1.0
+        # print i,par_i,type(i),type(par_i)
+        flandau3 = hist2.GetFunction('flandau2')
+        if flandau3:
+            # print flandau3,flandau3.GetNpar()
+            flandau3.SetParameter(i,par_i)
     if False:
         for i in range(flandau.GetNpar()):
             print flandau.GetParameter(i),flandau2.GetParameter(i)
