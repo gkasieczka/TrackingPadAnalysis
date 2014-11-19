@@ -261,10 +261,12 @@ if __name__ == "__main__":
     ###############################
     # check if timing went alright
     ###############################
-    if my_run.calibration_event_fraction < 0.7:
-        print 'timing didn\'t work. fraction below 70 %. redo the timing.'
-        print 'exiting...'
-        sys.exit(-1)
+    ignore_timing = True
+    if not ignore_timing:
+        if my_run.calibration_event_fraction < 0.7:
+            print 'timing didn\'t work. fraction below 70 %. redo the timing.'
+            print 'exiting...'
+            sys.exit(-1)
     
     reloadAnyway = False
     if 'reload' in sys.argv:

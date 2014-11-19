@@ -13,6 +13,7 @@ import datetime
 import ROOT
 ROOT.gROOT.SetBatch()
 
+reanalyze = False
 do_pedestal = False
 do_data     = False
 reload = False
@@ -22,12 +23,14 @@ args = sys.argv
 
 if 'reload' in args:
     reload = True
+if 'reanalyze' in args:
+    reanalyze = True
 
 if 'pedestal' in args or 'ped' in args or 'p' in args:
     do_pedestal = True
-if 'data' in args or 'dat' in args or 'd' in args:
+if 'data' in args:
     do_data = True
-if 'both in args':
+if 'both' in args:
     do_data = True
     do_pedestal = True
 
@@ -36,6 +39,11 @@ if 'both in args':
 #     print 'don\'t be greedy'
 #     sys.exit()
 
+print 'pedestal: ',do_pedestal
+print 'data: ',do_data
+print 'reload: ',reload
+print 'reanalyze:',reanalyze
+
 if not do_pedestal and not do_data:
     print 'you have to specify either \'data\' or \'pedestal\''
     print 'don\'t be modest'
@@ -43,21 +51,22 @@ if not do_pedestal and not do_data:
 
 RunInfo.load('runs.json')
 
-
 dat_not = []
 dat_all = []
 ped_not = []
 ped_all = []
 commands = []
 if do_pedestal:
-
+    ped_fail = []
     for rn, r in RunInfo.runs.items():
         if r.data_type == 1:
             ped_all.append(rn)
-            if math.isnan(r.pedestal) and r.calibration_event_fraction > 0.:
+            if math.isnan(r.pedestal):
                 ped_not.append(rn)
+            else:
+                ped_fail.append(rn)
 
-
+    print 'failues',ped_fail
     print 'these are the unanalyzed pedestal runs:'
     print ped_not
 
@@ -67,18 +76,25 @@ if do_pedestal:
         # print 'calling', cmd
         # call('python Analyze.py reload '+str(run), shell=True)
 if do_data:
-    
+    dat_fail_no_timing = []
+    dat_fail_no_pedestal = []
     for rn, r in RunInfo.runs.items():
         if r.data_type == 0:
             dat_all.append(rn)
             has_pedestal = not math.isnan(r.pedestal)
             has_timing   = r.calibration_event_fraction > 0.
             has_plots    = os.path.isfile('results/run_'+str(rn)+'/plots.pdf') # check if a file already exists
-
-            if (has_pedestal and has_timing) and not has_plots:
+            if (has_pedestal and has_timing) and (not has_plots or reanalyze):
                 dat_not.append(rn)
-
-    print 'these are the unanalyzed data runs:'
+            else:
+                if not has_pedestal:
+                    dat_fail_no_pedestal.append(rn)
+                if not  has_timing:
+                    dat_fail_no_timing.append(rn)
+    print
+    print 'cannot analyze: due to missing pedestal',dat_fail_no_pedestal
+    print 'and due to missing timing',dat_fail_no_timing
+    print '\nthese are the unanalyzed data runs:'
     print dat_not
     
     for run in dat_not:
@@ -89,6 +105,7 @@ if do_data:
         commands.append(cmd)
         # print 'calling', cmd
         # call('python Analyze.py '+str(run), shell=True)
+raw_input('start analysis. press enter')
 pool = Pool(nProcesses)
 it = pool.imap_unordered(partial(call, shell=True), commands)
 failures = []
