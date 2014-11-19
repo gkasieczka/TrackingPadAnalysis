@@ -12,19 +12,34 @@ Class RunInfo for 2014 September PSI Testbeam Analysis.
 import json
 import types as t
 
+import ROOT
 from Initializer import initializer
 from MaskInfo import MaskInfo
 from DataTypes import data_types
+import ConfigParser
 # import portalocker
 from lockfile import LockFile
 import os
 import math
+import time
+
+def irr(diamond):
+    if diamond in ['IIa-2', 'IIa-3', 'S30']:
+        return 'n-irr.'
+    if diamond in ['S129', 'IIa-1', 'IIa-5']:
+        return 'non-irr.'
+    if diamond in ['S125', 'S66']:
+        return 'p-irr.'
+    else:
+        return 'none'
+
 
 def signum(x):
     return (x > 0) - (x < 0)
 
-
-MaskInfo.load("masks.json")
+parser = ConfigParser.ConfigParser()
+parser.read('TimingAlignment.cfg')
+MaskInfo.load(parser.get('JSON','masks'))
 
 ###############################
 # MaskInfo
@@ -64,6 +79,7 @@ class RunInfo:
                  test_campaign="PSI_July14",
                  # [str] Which testbeam campaign are the data from
                  pedestal=float('nan'),  # [float] for data runs: which pedestal value to subtract
+                 pedestal_sigma=float('nan'),
                  comment="",  # [string] free text
                  # Next four parameters can be measured using TimingAlignment.py
                  align_ev_pixel=-1,  # [int] pixel event for time-align
@@ -135,23 +151,26 @@ class RunInfo:
     def get_rate(self):
         rates = {
             "PSI_Sept14":{
-                (-1,70): 4000,
-                (-10,70): 55000,
-                (-50,80): 620000,
-                (-50,120): 2000000
+                (1,70): 4000,
+                (2,70): 10000,
+                (10,70): 55000,
+                (50,80): 620000,
+                (50,120): 2000000
             },
             "PSI_July14":{
-                (-2,70): 10000,
-                (-10,70): 55000,
-                (-50,80): 620000,
-                (-50,120): 2000000
+                (2,70): 10000,
+                (10,70): 55000,
+                (50,80): 620000,
+                (50,120): 2000000
             }
         }
+        fsh13 = abs(self.fsh13)
+        fs11 = abs(self.fs11)
         if not self.test_campaign in rates:
             return 1
-        if not (self.fsh13,self.fs11) in rates[self.test_campaign]:
+        if not (fsh13,fs11) in rates[self.test_campaign]:
             return 2
-        return rates[self.test_campaign][(self.fsh13,self.fs11)]
+        return rates[self.test_campaign][(fsh13,fs11)]
 
     def get_rate_string(self):
         rate = self.get_rate()
@@ -159,6 +178,36 @@ class RunInfo:
         factor_strings = {0:'',3:'k',6:'M',9:'G',12:'P'}
         rate = rate/10**factor
         return '%3.1f %sHz/cm^{2}'%(rate,factor_strings[factor])
+    
+    def get_voltage_string(self,unit=True):
+        bias = self.bias_voltage
+        if bias <0: 
+            retVal = 'neg' 
+            bias *= -1
+        else:
+            retVal = 'pos' 
+        if unit:
+            retVal+='%04d'%bias
+            retVal+='V'
+        else:
+            retVal+='%d'%bias
+        return retVal
+    
+
+    def addDiamondInfo(this,x1, y1, x2, y2 ):
+        pave = ROOT.TPaveText(x1, y1, x2, y2, 'NDC')
+        pave.SetTextAlign(12)
+        pave.SetTextFont(82)
+        pave.SetFillColor(0)
+        pave.AddText(this.diamond+'\t '+irr(this.diamond))
+        pave.AddText('bias: %+5d V'%this.bias_voltage)
+        # pave.AddText('rate: '+rate)
+        pave.AddText('rate: %s' %(this.get_rate_string()))
+        pave.SetShadowColor(0)
+        pave.SetBorderSize(0)
+        pave.SetTextFont(42)
+        pave.SetTextSize(0.04)
+        return pave
 
     # End of __init__
     @staticmethod
@@ -172,27 +221,35 @@ class RunInfo:
     def update_run_info(run_timing):
         # run_timing.print_info()
         print 'save to json: ',run_timing.number
-        RunInfo.load('runs.json')
+        RunInfo.load(parser.get('JSON','runs'))
         RunInfo.runs[run_timing.number] = run_timing
         # RunInfo.update_timing(run_timing.run, run_timing.align_pixel, run_timing.align_pad, run_timing.offset,
         #                       run_timing.slope)
-        RunInfo.dump('runs.json')
+        RunInfo.dump(parser.get('JSON','runs'))
 
     # Dump all RunInfos (the content of the runs dictionary)
     #  to a file using json
     @classmethod
     def dump(cls, filename):
-        print 'write new json file'
         lock = LockFile(filename)
-        with lock:
-                f = open(filename, "w")
-                # portalocker.lock(file, portalocker.LOCK_EX)
-                # portalocker.lock(file, portalocker.LOCK_SH)
-                f.write(json.dumps(cls.runs,
-                                   default=lambda o: o.__dict__,
-                                   sort_keys=True,
-                                   indent=4))
-                f.close()
+        print 'write new json file, is locked: ',lock.is_locked(),'\t'
+        try:
+            lock.acquire(timeout=60)    # wait up to 60 seconds
+        except LockTimeout:
+            print "Cannot acquire file, break lock:", lock.path,'\t',
+            lock.break_lock()
+            lock.acquire()
+        # with lock:
+        f = open(filename, "w")
+        # portalocker.lock(file, portalocker.LOCK_EX)
+        # portalocker.lock(file, portalocker.LOCK_SH)
+        f.write(json.dumps(cls.runs,
+                           default=lambda o: o.__dict__,
+                           sort_keys=True,
+                           indent=4))
+        f.close()
+        lock.release()
+        print 'DONE WITH WRITING'
 
     # End of to_JSON
 
@@ -220,8 +277,21 @@ class RunInfo:
 # End of class RunInfo
 
 if __name__ == "__main__":
-    fname = "runs.json"
+    parser = ConfigParser.ConfigParser()
+    parser.read('TimingAlignment.cfg')
+    fname = parser.get('JSON','runs')
     if os.path.isfile(fname):
         print 'Load RunInfo: ', fname
         RunInfo.load(fname)
-        RunInfo.dump(fname)
+        lock = LockFile(fname)
+        print 'is_locked:',lock.is_locked()
+        # RunInfo.dump(fname)
+        runs = [461, 622, 663] 
+        for run in runs:
+            print run,RunInfo.runs[run].get_mask_key()
+            try:
+                RunInfo.runs[run].get_mask()
+                print 'OK'
+            except Exception as e:
+                print 'Failed',e
+                pass
