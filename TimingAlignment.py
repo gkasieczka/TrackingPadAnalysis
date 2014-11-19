@@ -124,7 +124,7 @@ if not f_pixel:
     run_info = RunInfo.runs[run]
     run_info.calibration_event_fraction = -4.0
     RunInfo.update_run_info(run_info)
-    raise Exception('Cannot find Pixel File')
+    # raise Exception('Cannot find Pixel File')
 
 
 

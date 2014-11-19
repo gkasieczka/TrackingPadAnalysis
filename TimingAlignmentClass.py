@@ -123,12 +123,11 @@ class TimingAlignment:
         self.f_pad = f_pad
         self.f_pixel = f_pixel
         tree_pad = f_pad.Get("rec")
-        tree_pixel = f_pixel.Get("time_tree")
+        if self.f_pixel:
+            tree_pixel = f_pixel.Get("time_tree")
         print "Read:"
         print "PAD Tree: ", tree_pad.GetEntries(), "entries"
-        print "Pixel Tree: ", tree_pixel.GetEntries(), "entries"
         self.tree_pad = tree_pad
-        self.tree_pixel = tree_pixel
         self.branch_names = branch_names
         self.histos = {}
         self.search_width_pixel = 6
@@ -141,6 +140,11 @@ class TimingAlignment:
         ROOT.gErrorIgnoreLevel = 2001
         self.verbose = False
         self.no_candidates = False
+        if self.f_pixel:
+            print "Pixel Tree: ", tree_pixel.GetEntries(), "entries"
+            self.tree_pixel = tree_pixel
+        else:
+            self.tree_pixel = None
         pass
 
     @staticmethod
@@ -232,17 +236,22 @@ class TimingAlignment:
         self.tree_pad.GetEntry(self.run_timing.align_ev_pad-1)
         self.initial_t_pad = getattr(self.tree_pad, self.branch_names["t_pad"])
         print 'Get Entry pad: ',self.run_timing.align_ev_pad,self.initial_t_pad
-
-        self.tree_pixel.GetEntry(self.run_timing.align_ev_pixel)
-        self.initial_t_pixel = getattr(self.tree_pixel, self.branch_names["t_pixel"])
-        print 'Get Entry pixel: ',self.run_timing.align_ev_pixel,self.initial_t_pixel
+        if self.f_pixel:
+            self.tree_pixel.GetEntry(self.run_timing.align_ev_pixel)
+            self.initial_t_pixel = getattr(self.tree_pixel, self.branch_names["t_pixel"])
+            print 'Get Entry pixel: ',self.run_timing.align_ev_pixel,self.initial_t_pixel
+        else:
+            self.initial_t_pixel = self.initial_t_pad
 
         # Get final-times
         self.tree_pad.GetEntry(self.max_events-1)
         self.final_t_pad = getattr(self.tree_pad, self.branch_names["t_pad"])
 
-        self.tree_pixel.GetEntry(self.max_events)
-        self.final_t_pixel = getattr(self.tree_pixel, self.branch_names["t_pixel"])
+        if self.f_pixel:
+            self.tree_pixel.GetEntry(self.max_events)
+            self.final_t_pixel = getattr(self.tree_pixel, self.branch_names["t_pixel"])
+        else:
+            self.final_t_pixel = self.final_t_pad
 
     def initialize_analysis(self):
         parser = ConfigParser.ConfigParser()
@@ -471,16 +480,19 @@ class TimingAlignment:
         pass
 
     def loop(self):
-        i_pixel = self.run_timing.align_ev_pixel
+        i_pixel = int(self.run_timing.align_ev_pixel)
         bar = None
         if progressbar_loaded:
             widgets = [progressbar.Bar('=', ' [', ']'), ' ', progressbar.Percentage()]
             # bar = progressbar.ProgressBar("Analyzed Events:",maxval=max_events, widgets=widgets).start()
+            self.set_events()
             bar = progressbar.ProgressBar(maxval=self.max_events, widgets=widgets, term_width=50).start()
-
         for i_pad in xrange(self.run_timing.align_ev_pad,self.max_events):
             if bar:
-                bar.update(i_pad)
+                try:
+                    bar.update(i_pad)
+                except ValueError:
+                    pass
             else:
                 if i_pad % 1000 == 0: print "{0} / {1}".format(i_pad, self.max_events)
 
@@ -489,7 +501,7 @@ class TimingAlignment:
             if self.f_pixel:
                 best_match = self.find_associated_pixel_event(i_pixel, time_pad)
             else:
-                best_match = [[i_pad, 0, time_pad]]
+                best_match = [i_pad, 0, time_pad]
             delta_pixel = -1* i_pixel
             i_pixel = best_match[0]
             delta_pixel += i_pixel
@@ -506,7 +518,7 @@ class TimingAlignment:
 
             # Find offset to closest calibration event
             calib_offset = -99 # -1 for non-calibration events
-            if calib_flag:                
+            if calib_flag and self.f_pixel:
                 # otherwise scan the closest twenty events
                 li_pixel_calib_events = []
                 for i_offset in range(-10,11):
@@ -526,9 +538,15 @@ class TimingAlignment:
 
             if is_correctly_matched:
                 self.out_branches["accepted"][0] = 1
-            hit_plane_bits = getattr(self.tree_pixel, self.branch_names["plane_bits_pixel"])
-            track_x = getattr(self.tree_pixel, self.branch_names["track_x"])
-            track_y = getattr(self.tree_pixel, self.branch_names["track_y"])
+            if self.f_pixel:
+                hit_plane_bits = getattr(self.tree_pixel, self.branch_names["plane_bits_pixel"])
+                track_x = getattr(self.tree_pixel, self.branch_names["track_x"])
+                track_y = getattr(self.tree_pixel, self.branch_names["track_y"])
+            else:
+                hit_plane_bits = 0
+
+                track_x = 0
+                track_y = 0
             self.out_branches['n_matched_pixel'][0] = i_pixel
             #     # print i_pixel
             # else:
@@ -703,7 +721,10 @@ class TimingAlignment:
         print 'Run {:3d}: The fraction of correctly assign events is {:6.2f}% '.format(self.run,fraction)
         self.run_timing.calibration_event_fraction = fraction
         self.run_timing.time_pad_data = self.f_pad.GetCreationDate().Convert()
-        self.run_timing.time_pixel_data = self.f_pixel.GetCreationDate().Convert()
+        if self.f_pixel:
+            self.run_timing.time_pixel_data = self.f_pixel.GetCreationDate().Convert()
+        else:
+            self.run_timing.time_pixel_data  = 0
         self.run_timing.time_timing_alignment = int(self.class_time)
 
 
