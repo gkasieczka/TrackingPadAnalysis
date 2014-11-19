@@ -8,11 +8,13 @@ Analysis of the Runs and plot production
 # Imports
 ###############################
 
+import pickle
 import ROOT, copy, sys, math, os
 from RunInfo import RunInfo
 import AnalyzeHelpers as ah
 import warnings
 import root_style
+import ConfigParser
 
 ###############################
 # Usage
@@ -70,16 +72,32 @@ def saveCanvas(c1,name):
         #print '\t',fname
         ensure_dir(fname)
         c1.SaveAs(fname)
-    #raw_input()
-
 
 def getPedestalValue(hist):
     tmp_hist = copy.deepcopy(hist.ProjectionY())
+    tmp_hist.SetBinContent(0,0)
+    tmp_hist.SetBinContent(1,0)
+    tmp_hist.SetBinContent(tmp_hist.GetNbinsX(),0)
+    tmp_hist.SetBinContent(tmp_hist.GetNbinsX()+1,0)
     rms = tmp_hist.GetRMS()
-    mp = tmp_hist.GetBinCenter(tmp_hist.GetMaximumBin())
-    func = ROOT.TF1('gaus_fit','gaus',mp-rms/2,mp+rms/2)
+    maximum_bin = tmp_hist.GetMaximumBin()
+    maximum = tmp_hist.GetBinContent(maximum_bin)
+    mp = tmp_hist.GetBinCenter(maximum_bin)
+    x_low = maximum_bin
+    x_high = maximum_bin
+    while tmp_hist.GetBinContent(x_low) > maximum/2 and x_low > 0:
+        x_low -= 1
+    x_low = tmp_hist.GetBinCenter(x_low)
+    while tmp_hist.GetBinContent(x_high) > maximum/2 and x_high < tmp_hist.GetNbinsX():
+        x_high += 1
+    x_high = tmp_hist.GetBinCenter(x_high)
+    fwhm = x_high - x_low
+    fit_range = min(rms,fwhm)
+    # print 'mp',mp,'rms',rms,'fwhm',fwhm, 'range',fit_range
+    func = ROOT.TF1('gaus_fit','gaus',mp-fit_range/2,mp+fit_range/2)
     tmp_hist.Fit(func,'Q','',mp-rms/2,mp+rms/2)
     central = func.GetParameter(1)
+    sigma = func.GetParameter(2)
     c0 = ROOT.TCanvas('foo', 'bar', 600, 600)
     tmp_hist.Draw('')
     tmp_hist.GetXaxis().SetTitle('signal in adc')
@@ -90,8 +108,7 @@ def getPedestalValue(hist):
     pave = ah.addDiamondInfo(0.02, 0.02, 0.15, 0.11, my_run)
     pave.Draw()
     saveCanvas(c0,targetdir+'/'+'pedestal_'+prefix)
-    return central
-    
+    return central, sigma
 
 def makeTimePlots(h_time_2d):
     profileY = h_time_2d.ProfileY()
@@ -122,8 +139,12 @@ def makeTimePlots(h_time_2d):
     #land.Draw()
     this_style.print_margins()
     fit_res[2].Draw()
+    pave = ah.addDiamondInfo(0.02, 0.02, 0.15, 0.11, my_run)
+    pave.Draw()
     saveCanvas(c0,targetdir+'/'+'landauGaus_'+prefix)
     fit_res[-1].Draw()
+    pave = ah.addDiamondInfo(0.02, 0.02, 0.15, 0.11, my_run)
+    pave.Draw()
     saveCanvas(c0,targetdir+'/'+'histo_'+prefix)
     # return
 
@@ -143,7 +164,6 @@ def makeTimePlots(h_time_2d):
     for ibin in range(1,mpvs.GetNbinsX()+1):
         mpvs.SetBinError(ibin, errs.GetBinContent(ibin))
 
-
     h_time_2d.SetTitle('Time evolution of the signal pulse')
     # x-axis
     h_time_2d.GetXaxis().SetTitle('minutes')
@@ -155,7 +175,7 @@ def makeTimePlots(h_time_2d):
     h_time_2d.GetYaxis().SetTitle('pulse height')
     h_time_2d.GetYaxis().SetLabelSize(0.05)
     h_time_2d.GetYaxis().SetTitleSize(0.05)
-    h_time_2d.GetYaxis().SetRangeUser(-50,400)
+    h_time_2d.GetYaxis().SetRangeUser(-100,500)
     h_time_2d.Draw('colz')
 
     pave = ah.addDiamondInfo(0.02, 0.02, 0.15, 0.11, my_run)
@@ -166,11 +186,15 @@ def makeTimePlots(h_time_2d):
 
 
 def makeXYPlots(h_3d):
-
+    if my_run.calibration_event_fraction < 0.5:
+        return
     cp2d = copy.deepcopy(h_3d.Project3D('yx'))
 
     tmp_size = ROOT.gStyle.GetTitleSize()
-    tmp_marg = ROOT.gStyle.GetPadRightMargin()
+    tmp_marg_right = ROOT.gStyle.GetPadRightMargin()
+    tmp_marg_left  = ROOT.gStyle.GetPadLeftMargin()
+    tmp_marg_top = ROOT.gStyle.GetPadTopMargin()
+    tmp_marg_Bottom= ROOT.gStyle.GetPadBottomMargin()
 
     # set some style parameters
     ROOT.gStyle.SetTitleSize(0.07,'t')
@@ -220,11 +244,14 @@ def makeXYPlots(h_3d):
             ## get the mean and MPV of the landau for all the bins with non-zero integral
             # mpv = z_histo.GetFunction('landau').GetParameter(1) #fit_res[1].GetParameter(1)
     
-            mpv = fit_res[1].getRealValue('ml')
-            sig = fit_res[1].getRealValue('sl')
+            #mpv = fit_res[1].getRealValue('ml')
+            #sig = fit_res[1].getRealValue('sl')
+
             #mpv = fit_res[1][1]
             #sig = fit_res[1][2]
             mean = z_histo.GetMean()
+            mpv = z_histo.GetXaxis().GetBinCenter( z_histo.GetMaximumBin()  )
+            sig = z_histo.GetRMS()
 
             mpvs.append(mpv)
             sigmas.append(sig)
@@ -234,51 +261,83 @@ def makeXYPlots(h_3d):
             h_2d_sigma.SetBinContent(xbin, ybin, sig )
             h_2d_mean .SetBinContent(xbin, ybin, mean)
             h_2d_nfill.SetBinContent(xbin, ybin, z_histo.Integral())
-    
+
+    #get ranges
+    fname = 'xy_plots_range.pl'
+    try:
+        ranges = pickle.load( open( fname, "rb" ) )
+    except IOError:
+        ranges = {}
+    dia = my_run.diamond
+    central = ah.mean(means)
+    old_range = ranges.get(dia,[1e9,-1e9])
+    print dia
+    print 'old range', old_range
+    this_range = [central-50,central+50]
+    print 'this range',this_range
+    new_range = [min(old_range[0],this_range[0]),max(old_range[1],this_range[1])]
+    print new_range
+    ranges[dia] = new_range
+    pickle.dump( ranges, open( fname, "wb" ) )
+
+    #save canvases
     ROOT.gStyle.SetOptStat(0)
-    
-    c1 = ROOT.TCanvas('foo', 'bar', 600, 600)
-    c1.Divide(2,2)
-    
+    c1 = this_style.get_canvas('space_resloved_means')
+    ROOT.gPad.SetTicks(1,1)
+    h_2d_mean.SetTitle('XY distribution of mean PH')
+    h_2d_mean.UseCurrentStyle()
+
+    #only mean distribution
+    h_2d_mean.Draw('colz')
+    h_2d_mean.GetZaxis().SetRangeUser(new_range[0],new_range[1])
+    pave = my_run.addDiamondInfo(0.6, 0.9, 0.9, 0.99)
+    pave.Draw('same')
+    c1.Update()
+    saveCanvas(c1,targetdir+'/'+prefix+'_xyMeans')
+
+    #mean and no of tracks
+    c1 = this_style.get_canvas('space_resloved_signals')
+    c1.Divide(1,2)
+
     c1.cd(1)
     ROOT.gPad.SetTicks(1,1)
-    h_2d_nfill.SetTitle('number of hits in XY')
+    h_2d_nfill.SetTitle('number of tracks in XY')
     h_2d_nfill.Draw('colz')
     
     c1.cd(2)
-    ROOT.gPad.SetTicks(1,1)
-    central = ah.mean(means)
-    h_2d_mean.SetTitle('XY distribution of mean PH')
     h_2d_mean.Draw('colz')
-    h_2d_mean.GetZaxis().SetRangeUser(central-50., central+50.)
-    
-    c1.cd(3)
-    ROOT.gPad.SetTicks(1,1)
-    #central = ah.mean(means)
-    central = abs(mean)
-    h_2d_mpv.SetTitle('XY distribution of MPV of PH')
-    h_2d_mpv.Draw('colz')
-    h_2d_mpv.GetZaxis().SetRangeUser(central-40., central+40.)
-    
-    c1.cd(4)
-    ROOT.gPad.SetTicks(1,1)
-    central = ah.mean(sigmas)
-    h_2d_sigma.SetTitle('width of PH')
-    h_2d_sigma.Draw('colz')
-    h_2d_sigma.GetZaxis().SetRangeUser(0., central+10.)
+    h_2d_mean.GetZaxis().SetRangeUser(new_range[0],new_range[1])
+
+
+
+    # h_2d_mean.GetZaxis().SetRangeUser(central-50., central+50.)
+    # c1.cd(3)
+    # ROOT.gPad.SetTicks(1,1)
+    # central = ah.mean(mpvs)
+    # #central = abs(mean)
+    # h_2d_mpv.SetTitle('XY distribution of MPV of PH')
+    # h_2d_mpv.Draw('colz')
+    # h_2d_mpv.GetZaxis().SetRangeUser(central-40., central+40.)
+    #
+    # c1.cd(4)
+    # ROOT.gPad.SetTicks(1,1)
+    # central = ah.mean(sigmas)
+    # h_2d_sigma.SetTitle('width of PH')
+    # h_2d_sigma.Draw('colz')
+    # h_2d_sigma.GetZaxis().SetRangeUser(0., central+10.)
 
     c1.cd(0)
-    pave = ah.addDiamondInfo(0.4, 0.45, 0.6, 0.55, my_run)
+    pave = my_run.addDiamondInfo(0.4, 0.45, 0.6, 0.55)
     pave.Draw('same')
     
     saveCanvas(c1,targetdir+'/'+prefix+'_xyPlots')
     # ROOT.gStyle.Reset()
     # reset the style
     ROOT.gStyle.SetTitleSize(tmp_size,'t')
-    ROOT.gStyle.SetPadRightMargin (tmp_marg)
-    ROOT.gStyle.SetPadLeftMargin  (tmp_marg)
-    ROOT.gStyle.SetPadBottomMargin(tmp_marg)
-    ROOT.gStyle.SetPadTopMargin   (tmp_marg)
+    ROOT.gStyle.SetPadRightMargin (tmp_marg_right)
+    ROOT.gStyle.SetPadLeftMargin  (tmp_marg_left)
+    ROOT.gStyle.SetPadBottomMargin(tmp_marg_Bottom)
+    ROOT.gStyle.SetPadTopMargin   (tmp_marg_top)
 
     del h_2d_mpv, h_2d_mean, h_2d_nfill, h_3d
 
@@ -288,8 +347,10 @@ if __name__ == "__main__":
     ###############################
     # Get all the runs from the json
     ###############################
-    
-    RunInfo.load('runs.json')
+
+    parser = ConfigParser.ConfigParser()
+    parser.read('TimingAlignment.cfg')
+    RunInfo.load(parser.get('JSON','runs'))
 
     global my_rn
     ## my_rn  = int(sys.argv[-1])
@@ -398,7 +459,8 @@ if __name__ == "__main__":
              25,   -0.10,   0.40, 
             250, -500.00, 500.00)
 
-        runPedestal = math.isnan(my_run.pedestal) and (my_run.pedestal_run == -1 or my_run.number == my_run.pedestal_run)
+        ## runPedestal = math.isnan(my_run.pedestal) and (my_run.pedestal_run == -1 or my_run.number == my_run.pedestal_run)
+        runPedestal = (my_run.data_type == 1)
 
         print 'is nan?', math.isnan(my_run.pedestal)
         if math.isnan(my_run.pedestal) and (my_run.pedestal_run != -1 and my_run.number != my_run.pedestal_run):
@@ -434,18 +496,26 @@ if __name__ == "__main__":
 
         if h_time_2d:
             h_time_2d.Delete()
-        h_time_2d            = ROOT.TH2F('h_time_2d'           , 'h_time_2d'           , int(mins+1), 0., int(mins+1), 550, -50, 500.)
-        h_time_2d_chn2offset = ROOT.TH2F('h_time_2d_chn2offset', 'h_time_2d_chn2offset', int(mins+1), 0., int(mins+1), 550, -50, 500.)
+        h_time_2d            = ROOT.TH2F('h_time_2d'           , 'h_time_2d'           , int(mins+1), 0., int(mins+1), 1000, -500, 500.)
+        h_time_2d_chn2offset = ROOT.TH2F('h_time_2d_chn2offset', 'h_time_2d_chn2offset', int(mins+1), 0., int(mins+1), 1000, -500, 500.)
     
         print 'run of %.2f minutes length' %(mins)
         
         n_wrong_delay = 0
+        if my_run.bias_voltage >= 0:
+            factor = -1.0
+        else:
+            factor = 1.0
         ## fill the tree data in the histograms
         for ev in my_tree:
             
             if ev.track_x < -99. and ev.track_y < -99.: ## ommit empty events
                 continue
             if ev.calib_flag: # these are calibration events
+                continue
+            if ev.saturated:
+                continue
+            if abs(ev.integral50) > 499.:
                 continue
                
             ########################################
@@ -467,11 +537,6 @@ if __name__ == "__main__":
             except:
                 now = ev.t_pad
             rel_time = int( (now - time_first) / time_binning) ## change to t_pad
-            if my_run.bias_voltage>0:
-                factor = -1.0
-            else:
-                factor = 1.0
-
             try:
                 avrg_chn2 = ev.avrg_first_chn2
             except:
@@ -502,15 +567,20 @@ if __name__ == "__main__":
         print '------------------------------------'
         print '--- this is a pedestal run ---------'
         print '------------------------------------'
-        pedestal = getPedestalValue(h_time_2d)
-        RunInfo.load('runs.json')
+        pedestal = getPedestalValue(h_time_2d)[0]
+        pedestal_sig = getPedestalValue(h_time_2d)[1]
+
+        RunInfo.load(parser.get('JSON','runs'))
         my_run = RunInfo.runs[my_rn]
         my_run.pedestal = pedestal
+        my_run.pedestal_sigma = pedestal_sig
+        print 'PEDESTAL: ',pedestal,pedestal_sig
         RunInfo.update_run_info(my_run)
         for rn, r in RunInfo.runs.items():
             if r == my_run: continue
             if r.pedestal_run == my_run.number:
                 r.pedestal = pedestal
+                r.pedestal_sigma = pedestal_sig
                 RunInfo.update_run_info(r)
     else:
         print '------------------------------------'
@@ -523,7 +593,4 @@ if __name__ == "__main__":
         ROOT.gROOT.SetBatch()
         makeXYPlots(h_3d)
         b = makeTimePlots(h_time_2d)
-
     infile.Close()
-
-
