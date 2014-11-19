@@ -10,6 +10,8 @@ import subprocess
 import multiprocessing
 import datetime
 import ROOT
+import ConfigParser
+
 ROOT.gROOT.SetBatch()
 
 do_pedestal = False
@@ -24,17 +26,21 @@ def modification_date(filename):
 d = modification_date('TimingAlignmentClass.py')
 print d
 
-RunInfo.load('runs.json')
+
+parser = ConfigParser.ConfigParser()
+parser.read('TimingAlignment.cfg')
+RunInfo.load(parser.get('JSON','runs'))
 
 print 'There are in total {n_runs} runs in the DB'.format(n_runs=len(RunInfo.runs))
 
-nProcesses = 10
+nProcesses = 4
 failures = []
 completed = []
 if do_timing:
     timing_not = []
+    timing_old = []
     timing_all = []
-
+    timing_bad = []
     for rn, r in RunInfo.runs.items():
         if r.test_campaign !="PSI_Sept14":
             continue
@@ -43,30 +49,37 @@ if do_timing:
         #     print 'fraction: ',r.calibration_event_fraction
         #     print 'time: ',r.time_timing_alignment,' ',d,' ', r.time_timing_alignment < d
         # if r.calibration_event_fraction < 0
-        if r.calibration_event_fraction < 0.5 or r.time_timing_alignment < d:
-            timing_all.append(rn)
+        if  r.time_timing_alignment < d:
+            timing_old.append(rn)
+        elif r.calibration_event_fraction < 0.5:
+            timing_bad.append(rn)
             # if math.isnan(r.pedestal) and r.calibration_event_fraction > 0.:
             #     ped_not.append(rn)
+    timing_all = timing_bad + timing_old
 
-    print 'these are the unanalyzed pedestal runs:'
+    print 'these are the',len(timing_all),'unanalyzed runs:'
+    print len(timing_old),'old', timing_old
+    print len(timing_bad),'bad', timing_bad
+    print '\n'
     print timing_all
+    raw_input()
     errors = []
     commands = []
     for run in timing_all:
         cmd = './TimingAlignment.py {run} 3'.format(run=run)
-        commands.append(cmd)
+        commands.append([cmd,run])
     pool = Pool(nProcesses)
-    it = pool.imap_unordered(partial(call, shell=True), commands)
+    it = pool.imap_unordered(partial(call, shell=True),map(lambda c: c[0], commands))
     for i, returncode in enumerate(it):
         # print multiprocessing.active_children()
         if returncode != 0:
             print("Command '%s'  failed: %d" % (commands[i], returncode))
-            failures.append(i)
+            failures.append([commands[i][1],i])
         else:
             print("Command '%s'  completed: %d" % (commands[i], returncode))
         # call(cmd, shell=True)
 
-print 'Failures:',failures
+print 'Failures:',len(failures),failures
 # if do_data:
 #     dat_not = []
 #     dat_all = []
