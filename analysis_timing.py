@@ -5,6 +5,7 @@ import math, sys, os
 from RunInfo import RunInfo
 from subprocess import call
 import root_style
+import ConfigParser
 
 this_style = root_style.root_style()
 this_style.set_style(1000,1000,1)
@@ -15,7 +16,9 @@ def modification_date(filename):
     return datetime.datetime.fromtimestamp(t)
 d = modification_date('TimingAlignmentClass.py')
 
-RunInfo.load('runs.json')
+parser = ConfigParser.ConfigParser()
+parser.read('TimingAlignment.cfg')
+RunInfo.load(parser.get('JSON','runs'))
 fsh13 = set()
 fs11 = set()
 for rn,r in RunInfo.runs.items():
@@ -49,6 +52,8 @@ h_event_fraction_vs_rate.GetYaxis().SetTitle('Rate')
 bad_events  = {0: [], 1:[]}
 old_runs = []
 for rn, r in RunInfo.runs.items():
+    if rn == 854:
+        continue
     if r.test_campaign !="PSI_Sept14":
         continue
     if r.time_timing_alignment < d:
@@ -84,10 +89,10 @@ x_labels = {-6:'no alignment events',
 for i in x_labels:
     bin = h_analysis_status.GetXaxis().FindBin(i)
     h_analysis_status.GetXaxis().SetBinLabel(bin,x_labels[i])
-print 'old_runs',old_runs
+print 'old_runs',len(old_runs),old_runs
 
 for ev in sorted(bad_events.keys()):
-    print x_labels[ev],': ',sorted(bad_events[ev]),'\n'
+    print len(bad_events[ev]),x_labels[ev],': ',sorted(bad_events[ev]),'\n'
 ROOT.gStyle.SetOptStat(0)
 c1 = this_style.get_canvas('timimng_analysis')
 c1.cd()
