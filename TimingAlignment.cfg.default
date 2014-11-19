@@ -4,3 +4,11 @@ basedir_pixel:  /scratch/PAD-testbeams/PSI_sept_14/software/DHidasPLT/plots/
 
 format_pad:     {0}run_2014_09r{1:06d}.root
 format_pixel:   {0}{1:06d}/histos.root
+
+[JSON]
+runs:   runs_sept14.json
+mask:   mask_sept14.json
+
+[Plotting]
+adc_max: 500
+adc_min: -100
