@@ -933,7 +933,7 @@
         "begin_date": "2014-09-23", 
         "begin_time": 1347, 
         "bias_voltage": 500, 
-        "calibration_event_fraction": 3.614457831325301, 
+        "calibration_event_fraction": 94.86873508353221, 
         "comment": "", 
         "data_type": 3, 
         "diamond": "IIa-1", 
@@ -953,11 +953,11 @@
         "rate_trigger": 18, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": -3.20780082406024e-06, 
-        "time_offset": 0.0010787263390071077, 
+        "time_drift": 1.8196861476469936e-06, 
+        "time_offset": -0.015049833329377708, 
         "time_pad_data": 1415143163, 
         "time_pixel_data": 1412327471, 
-        "time_timing_alignment": 1416257722
+        "time_timing_alignment": 1416826224
     }, 
     "168": {
         "align_ev_pad": 8, 
@@ -1952,8 +1952,8 @@
         "time_timing_alignment": 1416259227
     }, 
     "368": {
-        "align_ev_pad": 3, 
-        "align_ev_pixel": 4, 
+        "align_ev_pad": 7, 
+        "align_ev_pixel": 11, 
         "begin_date": "2014-09-24", 
         "begin_time": 1303, 
         "bias_voltage": 500, 
@@ -1977,11 +1977,11 @@
         "rate_trigger": 17, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": -2.0201440075361884e-06, 
-        "time_offset": 0.0002320912420146062, 
+        "time_drift": 1.7894402443937113e-06, 
+        "time_offset": -0.021080371270289073, 
         "time_pad_data": 1415122174, 
         "time_pixel_data": 1412326014, 
-        "time_timing_alignment": 1416259231
+        "time_timing_alignment": 1416827237
     }, 
     "370": {
         "align_ev_pad": 6, 
@@ -2885,7 +2885,7 @@
         "begin_date": "2014-09-25", 
         "begin_time": 904, 
         "bias_voltage": 500, 
-        "calibration_event_fraction": 3.389830508474576, 
+        "calibration_event_fraction": 95.22222222222221, 
         "comment": "", 
         "data_type": 3, 
         "diamond": "IIa-3", 
@@ -2905,11 +2905,11 @@
         "rate_trigger": 18, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": 1.4715320385363266e-06, 
-        "time_offset": -0.002518675540492631, 
+        "time_drift": 1.69906527225e-06,
+        "time_offset": -0.0181456223808,
         "time_pad_data": 1415117131, 
         "time_pixel_data": 1412335056, 
-        "time_timing_alignment": 1416260785
+        "time_timing_alignment": 1416832397
     }, 
     "478": {
         "align_ev_pad": 7, 
