@@ -7072,8 +7072,8 @@
         "time_timing_alignment": 1416266434
     }, 
     "652": {
-        "align_ev_pad": 4, 
-        "align_ev_pixel": 5, 
+        "align_ev_pad": 3, 
+        "align_ev_pixel": 2, 
         "begin_date": "2014-09-28", 
         "begin_time": 327, 
         "bias_voltage": -125, 
@@ -7097,11 +7097,11 @@
         "rate_trigger": 16, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": -3.3603258636995714e-06, 
-        "time_offset": 0.0008385930410097121, 
+        "time_drift": 1.7250238521849178e-06, 
+        "time_offset": -0.007866357918432834, 
         "time_pad_data": 1415142226, 
         "time_pixel_data": 1412322908, 
-        "time_timing_alignment": 1416266517
+        "time_timing_alignment": 1416925935
     }, 
     "653": {
         "align_ev_pad": 3, 
@@ -8064,8 +8064,8 @@
         "time_timing_alignment": 1416267792
     }, 
     "695": {
-        "align_ev_pad": 7, 
-        "align_ev_pixel": 9, 
+        "align_ev_pad": 5, 
+        "align_ev_pixel": 5, 
         "begin_date": "2014-09-28", 
         "begin_time": 1847, 
         "bias_voltage": 500, 
@@ -8089,15 +8089,15 @@
         "rate_trigger": 19, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": 1.7982053498445291e-06, 
-        "time_offset": -0.0005492612174505173, 
+        "time_drift": 1.899889025513568e-06, 
+        "time_offset": -0.021793785665291256, 
         "time_pad_data": 1415160517, 
         "time_pixel_data": 1412322532, 
-        "time_timing_alignment": 1416267820
+        "time_timing_alignment": 1416926633
     }, 
     "696": {
-        "align_ev_pad": 2, 
-        "align_ev_pixel": 1, 
+        "align_ev_pad": 5, 
+        "align_ev_pixel": 3, 
         "begin_date": "2014-09-29", 
         "begin_time": 10, 
         "bias_voltage": 500, 
@@ -8121,11 +8121,11 @@
         "rate_trigger": 21, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": 2.4767337238655728e-06, 
-        "time_offset": 0.0005807976776301016, 
+        "time_drift": 1.8127447189060492e-06, 
+        "time_offset": -0.012448746788831667, 
         "time_pad_data": 1415115651, 
         "time_pixel_data": 1412322727, 
-        "time_timing_alignment": 1416267902
+        "time_timing_alignment": 1416927085
     }, 
     "697": {
         "align_ev_pad": 9, 
@@ -9088,12 +9088,12 @@
         "time_timing_alignment": 1416269324
     }, 
     "740": {
-        "align_ev_pad": 5, 
-        "align_ev_pixel": 18, 
+        "align_ev_pad": 2, 
+        "align_ev_pixel": 3, 
         "begin_date": "2014-09-29", 
         "begin_time": 1600, 
         "bias_voltage": 500, 
-        "calibration_event_fraction": 63.0232558139535, 
+        "calibration_event_fraction": 43.47826086956522, 
         "comment": "", 
         "data_type": 3, 
         "diamond": "S125", 
@@ -9113,11 +9113,11 @@
         "rate_trigger": 18, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": -2.184060345879146e-06, 
-        "time_offset": 0.0005965662303754366, 
+        "time_drift": 1.54e-06, 
+        "time_offset": 0.005723780602450646, 
         "time_pad_data": 1415154903, 
         "time_pixel_data": 1412327822, 
-        "time_timing_alignment": 1416269455
+        "time_timing_alignment": 1416928381
     }, 
     "747": {
         "align_ev_pad": 2, 
@@ -10533,7 +10533,7 @@
         "begin_date": "2014-09-30", 
         "begin_time": 1138, 
         "bias_voltage": -500, 
-        "calibration_event_fraction": 0.0, 
+        "calibration_event_fraction": 96.27659574468085, 
         "comment": "", 
         "data_type": 3, 
         "diamond": "2A87-E", 
@@ -10553,11 +10553,11 @@
         "rate_trigger": 18, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": -6.899459777714398e-08, 
-        "time_offset": -0.0024086937194030306, 
+        "time_drift": 1.850294031840195e-06, 
+        "time_offset": -0.019397440927931945, 
         "time_pad_data": 1415141305, 
         "time_pixel_data": 1412324761, 
-        "time_timing_alignment": 1416271233
+        "time_timing_alignment": 1416929670
     }, 
     "863": {
         "align_ev_pad": 7, 
