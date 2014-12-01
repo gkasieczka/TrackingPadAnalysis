@@ -472,6 +472,15 @@ class TimingAlignment:
 
 
         print "Best pad / pixel event for alignment: ", best_i_align_pad, best_i_align_pixel
+
+        # If it's a long run:
+        #  use the highest spike in the residual for seeding the time offset
+        if (RunInfo.runs[self.run].data_type == 3):
+            name = "h_pad{i_pad}_pixel{i_pixel}".format(i_pad=best_i_align_pad, i_pixel=best_i_align_pixel)
+            h = self.histos[name]
+            offset_shift = h.GetBinCenter(h.GetMaximumBin())
+            self.run_timing.time_offset -= offset_shift
+
         self.run_timing.align_ev_pixel = best_i_align_pixel
         self.run_timing.align_ev_pad = best_i_align_pad
         # self.run_timing.print_info()
@@ -592,6 +601,10 @@ class TimingAlignment:
 
 
     def save_histograms(self):
+
+        # If it's a long run we want to fit the timing differently
+        is_long_run = (RunInfo.runs[self.run].data_type == 3)
+
         c = ROOT.TCanvas()
         self.histos['h'].GetXaxis().SetTitle("t_{pixel} - t_{pad} [s]")
         self.histos['h'].GetYaxis().SetTitle("Events")
@@ -599,15 +612,30 @@ class TimingAlignment:
         c.Print("{0}/residual{1}.pdf".format(self.result_dir, self.appendix))
 
         # print h2, c
+        # Always also a fuller and a limited y-range time plot
         fun = ROOT.TF1("fun", "[0]+[1]*x")
-        self.histos['h2'].Fit(fun, "Q", "")
+
         self.histos['h2'].GetYaxis().SetTitleOffset(1.9)
         self.histos['h2'].GetXaxis().SetTitle("t_{pad} [s]")
         self.histos['h2'].GetYaxis().SetTitle("t_{pixel} - t_{pad} [s]")
+
+        h2_zoom = self.histos['h2'].Clone()
+        h2_zoom.GetYaxis().SetRangeUser(-0.002,0.002)
+
+        if is_long_run:
+            h2_zoom.Fit(fun, "Q", "")
+        else:
+            self.histos['h2'].Fit(fun, "Q", "")
+
         self.histos['h2'].Draw()
         c.Print("{0}/time{1}.pdf".format(self.result_dir, self.appendix))
         c.Print("{0}/time{1}.png".format(self.result_dir, self.appendix))
         c.Print("{0}/time{1}.root".format(self.result_dir, self.appendix))
+
+        h2_zoom.Draw()
+        c.Print("{0}/time_zoom{1}.pdf".format(self.result_dir, self.appendix))
+        c.Print("{0}/time_zoom{1}.png".format(self.result_dir, self.appendix))
+        c.Print("{0}/time_zoom{1}.root".format(self.result_dir, self.appendix))
 
         self.run_timing.time_offset -= fun.GetParameter(0)
         self.run_timing.time_drift -= fun.GetParameter(1)
@@ -739,3 +767,5 @@ class TimingAlignment:
             if self.write_json:
                 RunInfo.update_run_info(self.run_timing)
             pass
+        else:
+            print self.run_timing.time_offset, self.run_timing.time_drift

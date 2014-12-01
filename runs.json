@@ -933,7 +933,7 @@
         "begin_date": "2014-09-23", 
         "begin_time": 1347, 
         "bias_voltage": 500, 
-        "calibration_event_fraction": 3.614457831325301, 
+        "calibration_event_fraction": 94.86873508353221, 
         "comment": "", 
         "data_type": 3, 
         "diamond": "IIa-1", 
@@ -953,11 +953,11 @@
         "rate_trigger": 18, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": -3.20780082406024e-06, 
-        "time_offset": 0.0010787263390071077, 
+        "time_drift": 1.8196861476469936e-06, 
+        "time_offset": -0.015049833329377708, 
         "time_pad_data": 1415143163, 
         "time_pixel_data": 1412327471, 
-        "time_timing_alignment": 1416257722
+        "time_timing_alignment": 1416826224
     }, 
     "168": {
         "align_ev_pad": 8, 
@@ -1952,8 +1952,8 @@
         "time_timing_alignment": 1416259227
     }, 
     "368": {
-        "align_ev_pad": 3, 
-        "align_ev_pixel": 4, 
+        "align_ev_pad": 7, 
+        "align_ev_pixel": 11, 
         "begin_date": "2014-09-24", 
         "begin_time": 1303, 
         "bias_voltage": 500, 
@@ -1977,11 +1977,11 @@
         "rate_trigger": 17, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": -2.0201440075361884e-06, 
-        "time_offset": 0.0002320912420146062, 
+        "time_drift": 1.7894402443937113e-06, 
+        "time_offset": -0.021080371270289073, 
         "time_pad_data": 1415122174, 
         "time_pixel_data": 1412326014, 
-        "time_timing_alignment": 1416259231
+        "time_timing_alignment": 1416827237
     }, 
     "370": {
         "align_ev_pad": 6, 
@@ -2885,7 +2885,7 @@
         "begin_date": "2014-09-25", 
         "begin_time": 904, 
         "bias_voltage": 500, 
-        "calibration_event_fraction": 3.389830508474576, 
+        "calibration_event_fraction": 95.22222222222221, 
         "comment": "", 
         "data_type": 3, 
         "diamond": "IIa-3", 
@@ -2905,11 +2905,11 @@
         "rate_trigger": 18, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": 1.4715320385363266e-06, 
-        "time_offset": -0.002518675540492631, 
+        "time_drift": 1.69906527225e-06, 
+        "time_offset": -0.0181456223808, 
         "time_pad_data": 1415117131, 
         "time_pixel_data": 1412335056, 
-        "time_timing_alignment": 1416260785
+        "time_timing_alignment": 1416832397
     }, 
     "478": {
         "align_ev_pad": 7, 
@@ -3872,12 +3872,12 @@
         "time_timing_alignment": 1416262038
     }, 
     "518": {
-        "align_ev_pad": 4, 
-        "align_ev_pixel": 7, 
+        "align_ev_pad": 8, 
+        "align_ev_pixel": 16, 
         "begin_date": "2014-09-26", 
         "begin_time": 352, 
         "bias_voltage": -500, 
-        "calibration_event_fraction": 5.357142857142857, 
+        "calibration_event_fraction": 93.26145552560648, 
         "comment": "", 
         "data_type": 3, 
         "diamond": "IIa-2", 
@@ -3897,11 +3897,11 @@
         "rate_trigger": 18, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": 2.3585436039437326e-06, 
-        "time_offset": -0.0004771033851661549, 
+        "time_drift": 1.6290303265617926e-06, 
+        "time_offset": -0.03410985021940563, 
         "time_pad_data": 1415134867, 
         "time_pixel_data": 1412331704, 
-        "time_timing_alignment": 1416262044
+        "time_timing_alignment": 1416834271
     }, 
     "519": {
         "align_ev_pad": 1, 
@@ -4800,8 +4800,8 @@
         "time_timing_alignment": 1416263450
     }, 
     "560": {
-        "align_ev_pad": 9, 
-        "align_ev_pixel": 15, 
+        "align_ev_pad": 3, 
+        "align_ev_pixel": 4, 
         "begin_date": "2014-09-26", 
         "begin_time": 1854, 
         "bias_voltage": -500, 
@@ -4825,11 +4825,11 @@
         "rate_trigger": 16, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": -2.1996999732166567e-06, 
-        "time_offset": 0.00020810602217910908, 
+        "time_drift": 1.7921418479695345e-06, 
+        "time_offset": -0.019929563113823896, 
         "time_pad_data": 1415158430, 
         "time_pixel_data": 1412327936, 
-        "time_timing_alignment": 1416263503
+        "time_timing_alignment": 1416834661
     }, 
     "561": {
         "align_ev_pad": 1, 
@@ -6561,7 +6561,7 @@
     }, 
     "635": {
         "align_ev_pad": 3, 
-        "align_ev_pixel": 4, 
+        "align_ev_pixel": 3, 
         "begin_date": "2014-09-27", 
         "begin_time": 1643, 
         "bias_voltage": 500, 
@@ -6585,11 +6585,11 @@
         "rate_trigger": 17, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": -2.754403006865848e-06, 
-        "time_offset": -0.0005150733286191369, 
+        "time_drift": 1.8842435912897225e-06, 
+        "time_offset": -0.016169097949314697, 
         "time_pad_data": 1415139291, 
         "time_pixel_data": 1412322908, 
-        "time_timing_alignment": 1416265867
+        "time_timing_alignment": 1416912922
     }, 
     "636": {
         "align_ev_pad": 9, 
@@ -7072,8 +7072,8 @@
         "time_timing_alignment": 1416266434
     }, 
     "652": {
-        "align_ev_pad": 4, 
-        "align_ev_pixel": 5, 
+        "align_ev_pad": 3, 
+        "align_ev_pixel": 2, 
         "begin_date": "2014-09-28", 
         "begin_time": 327, 
         "bias_voltage": -125, 
@@ -7097,11 +7097,11 @@
         "rate_trigger": 16, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": -3.3603258636995714e-06, 
-        "time_offset": 0.0008385930410097121, 
+        "time_drift": 1.7250238521849178e-06, 
+        "time_offset": -0.007866357918432834, 
         "time_pad_data": 1415142226, 
         "time_pixel_data": 1412322908, 
-        "time_timing_alignment": 1416266517
+        "time_timing_alignment": 1416925935
     }, 
     "653": {
         "align_ev_pad": 3, 
@@ -8064,8 +8064,8 @@
         "time_timing_alignment": 1416267792
     }, 
     "695": {
-        "align_ev_pad": 7, 
-        "align_ev_pixel": 9, 
+        "align_ev_pad": 5, 
+        "align_ev_pixel": 5, 
         "begin_date": "2014-09-28", 
         "begin_time": 1847, 
         "bias_voltage": 500, 
@@ -8089,15 +8089,15 @@
         "rate_trigger": 19, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": 1.7982053498445291e-06, 
-        "time_offset": -0.0005492612174505173, 
+        "time_drift": 1.899889025513568e-06, 
+        "time_offset": -0.021793785665291256, 
         "time_pad_data": 1415160517, 
         "time_pixel_data": 1412322532, 
-        "time_timing_alignment": 1416267820
+        "time_timing_alignment": 1416926633
     }, 
     "696": {
-        "align_ev_pad": 2, 
-        "align_ev_pixel": 1, 
+        "align_ev_pad": 5, 
+        "align_ev_pixel": 3, 
         "begin_date": "2014-09-29", 
         "begin_time": 10, 
         "bias_voltage": 500, 
@@ -8121,11 +8121,11 @@
         "rate_trigger": 21, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": 2.4767337238655728e-06, 
-        "time_offset": 0.0005807976776301016, 
+        "time_drift": 1.8127447189060492e-06, 
+        "time_offset": -0.012448746788831667, 
         "time_pad_data": 1415115651, 
         "time_pixel_data": 1412322727, 
-        "time_timing_alignment": 1416267902
+        "time_timing_alignment": 1416927085
     }, 
     "697": {
         "align_ev_pad": 9, 
@@ -9088,12 +9088,12 @@
         "time_timing_alignment": 1416269324
     }, 
     "740": {
-        "align_ev_pad": 5, 
-        "align_ev_pixel": 18, 
+        "align_ev_pad": 2, 
+        "align_ev_pixel": 3, 
         "begin_date": "2014-09-29", 
         "begin_time": 1600, 
         "bias_voltage": 500, 
-        "calibration_event_fraction": 63.0232558139535, 
+        "calibration_event_fraction": 43.47826086956522, 
         "comment": "", 
         "data_type": 3, 
         "diamond": "S125", 
@@ -9113,11 +9113,11 @@
         "rate_trigger": 18, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": -2.184060345879146e-06, 
-        "time_offset": 0.0005965662303754366, 
+        "time_drift": 1.54e-06, 
+        "time_offset": 0.005723780602450646, 
         "time_pad_data": 1415154903, 
         "time_pixel_data": 1412327822, 
-        "time_timing_alignment": 1416269455
+        "time_timing_alignment": 1416928381
     }, 
     "747": {
         "align_ev_pad": 2, 
@@ -10533,7 +10533,7 @@
         "begin_date": "2014-09-30", 
         "begin_time": 1138, 
         "bias_voltage": -500, 
-        "calibration_event_fraction": 0.0, 
+        "calibration_event_fraction": 96.27659574468085, 
         "comment": "", 
         "data_type": 3, 
         "diamond": "2A87-E", 
@@ -10553,11 +10553,11 @@
         "rate_trigger": 18, 
         "test_campaign": "PSI_Sept14", 
         "time_analyse": -1, 
-        "time_drift": -6.899459777714398e-08, 
-        "time_offset": -0.0024086937194030306, 
+        "time_drift": 1.850294031840195e-06, 
+        "time_offset": -0.019397440927931945, 
         "time_pad_data": 1415141305, 
         "time_pixel_data": 1412324761, 
-        "time_timing_alignment": 1416271233
+        "time_timing_alignment": 1416929670
     }, 
     "863": {
         "align_ev_pad": 7, 
