@@ -492,14 +492,21 @@ if __name__ == "__main__":
         except:
             time_first = my_tree.t_pad
         length = time_last - time_first
+        mins = length/60.
+        print mins
+        if mins > 60:
+            hours = int(mins/60.)
+            real_mins = mins%60
+            print 'Run of %d h and %f min length'%(int(hours), real_mins)
+        else:
+            print 'run of %.2f minutes length' %(mins)
         mins = length/time_binning
 
         if h_time_2d:
             h_time_2d.Delete()
         h_time_2d            = ROOT.TH2F('h_time_2d'           , 'h_time_2d'           , int(mins+1), 0., int(mins+1), 1000, -500, 500.)
         h_time_2d_chn2offset = ROOT.TH2F('h_time_2d_chn2offset', 'h_time_2d_chn2offset', int(mins+1), 0., int(mins+1), 1000, -500, 500.)
-    
-        print 'run of %.2f minutes length' %(mins)
+        # print 'run of %.2f minutes length' %(mins)
         
         n_wrong_delay = 0
         if my_run.bias_voltage >= 0:
@@ -517,6 +524,7 @@ if __name__ == "__main__":
                 continue
             if abs(ev.integral50) > 499.:
                 continue
+
                
             ########################################
             # check if the delay is correct, if not exit after 10 wrong events
@@ -545,10 +553,11 @@ if __name__ == "__main__":
             signal_chn2 = factor*(ev.integral50 - pedestal - avrg_chn2)
             # print rel_time,signal
             # fill the 3D histogram
-            h_3d           .Fill(ev.track_x, ev.track_y, signal)
+            if ev.accepted:
+                h_3d           .Fill(ev.track_x, ev.track_y, signal)
 
-            h_3d_chn2offest.Fill(ev.track_x, ev.track_y, signal_chn2)
-        
+                h_3d_chn2offest.Fill(ev.track_x, ev.track_y, signal_chn2)
+
             # fill all the time histograms with the integral
             h_time_2d           .Fill(rel_time, signal)
             h_time_2d_chn2offset.Fill(rel_time, signal_chn2)
