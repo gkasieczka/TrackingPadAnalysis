@@ -62,15 +62,21 @@ if do_timing:
     print len(timing_bad),'bad', timing_bad
     print '\n'
     print timing_all
-    raw_input()
+    raw_input('Press enter to continue')
     errors = []
     commands = []
     for run in timing_all:
-        cmd = './TimingAlignment.py {run} 3'.format(run=run)
+        r = RunInfo.runs[run]
+        if r.data_type == 3:
+            cmd = './TimingAlignment.py {run} 0'.format(run=run)
+        else:
+            cmd = './TimingAlignment.py {run} 3'.format(run=run)
         commands.append([cmd,run])
+    print 'start running'
     pool = Pool(nProcesses)
     it = pool.imap_unordered(partial(call, shell=True),map(lambda c: c[0], commands))
     for i, returncode in enumerate(it):
+
         # print multiprocessing.active_children()
         if returncode != 0:
             print("Command '%s'  failed: %d" % (commands[i], returncode))
