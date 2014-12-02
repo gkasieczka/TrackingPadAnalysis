@@ -75,8 +75,8 @@ class RunInfo:
                  events_trig,  # [int] (total events, used for triggering)
                  pedestal_run,  # [int] run from which to take pedestal information
                  #         (set to -1 for pedestal runs or if no pedestal run is available)
-                 # test_campaign="PSI_Sept14",
-                 test_campaign="PSI_July14",
+                 test_campaign="PSI_Sept14",
+                 # test_campaign="PSI_July14",
                  # [str] Which testbeam campaign are the data from
                  pedestal=float('nan'),  # [float] for data runs: which pedestal value to subtract
                  pedestal_sigma=float('nan'),
@@ -89,8 +89,9 @@ class RunInfo:
                  calibration_event_fraction=-1.,
                  time_pad_data=-1,
                  time_pixel_data=-1,
-                 time_timing_alignment=-1,
-                 time_analyse=-1
+                 time_timing_alignment=-1.,
+                 time_analyse=-1,
+                 timing_alignment_width=-1.,
 
                  ): # fraction of correctly matched calibration events
 
@@ -121,6 +122,7 @@ class RunInfo:
         assert (type(time_offset) is t.FloatType), "Invalid time_offset"
         assert (type(time_drift) is t.FloatType), "Invalid time_drift"
         assert (type(calibration_event_fraction) is t.FloatType),"invalid calibration_event_fraction \"{0}\"".format(calibration_event_fraction)
+        assert (type(timing_alignment_width) is t.FloatType),'invlaid timing Alignment widht \"{0}\"'.format(timing_alignment_width)
 
         # Add to runs dictionary
         RunInfo.runs[self.number] = self
@@ -178,21 +180,21 @@ class RunInfo:
         factor_strings = {0:'',3:'k',6:'M',9:'G',12:'P'}
         rate = rate/10**factor
         return '%3.1f %sHz/cm^{2}'%(rate,factor_strings[factor])
-    
+
     def get_voltage_string(self,unit=True):
         bias = self.bias_voltage
-        if bias <0: 
-            retVal = 'neg' 
+        if bias <0:
+            retVal = 'neg'
             bias *= -1
         else:
-            retVal = 'pos' 
+            retVal = 'pos'
         if unit:
             retVal+='%04d'%bias
             retVal+='V'
         else:
             retVal+='%d'%bias
         return retVal
-    
+
 
     def addDiamondInfo(this,x1, y1, x2, y2 ):
         pave = ROOT.TPaveText(x1, y1, x2, y2, 'NDC')
@@ -286,7 +288,7 @@ if __name__ == "__main__":
         lock = LockFile(fname)
         print 'is_locked:',lock.is_locked()
         # RunInfo.dump(fname)
-        runs = [461, 622, 663] 
+        runs = [461, 622, 663]
         for run in runs:
             print run,RunInfo.runs[run].get_mask_key()
             try:
