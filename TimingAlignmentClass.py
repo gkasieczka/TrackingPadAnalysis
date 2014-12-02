@@ -207,6 +207,9 @@ class TimingAlignment:
         self.out_branches["accepted"] = array.array('i', [0])
         self.tree_out.Branch('accepted', self.out_branches["accepted"], 'accepted/I')
 
+        self.out_branches["delta_t"] = array.array('f', [0])
+        self.tree_out.Branch('delta_t', self.out_branches["delta_t"], 'delta_t/F')
+
         # Difference to calibration event
         self.out_branches["calib_offset"] = array.array('i', [0])
         self.tree_out.Branch('calib_offset', self.out_branches["calib_offset"], 'calib_offset/I')
@@ -517,9 +520,13 @@ class TimingAlignment:
             if self.f_pixel:
                 self.tree_pixel.GetEntry(i_pixel)
 
-
+            #best_match:
+            #best_match[0] matched pixel
+            #best_match[1] delta t
+            #best_match[2] time_pad
             # Check if we are happy with the timing
             # (residual below 1 ms)
+            self.out_branches["delta_t"][0] = best_match[1]
             is_correctly_matched = abs(best_match[1]) < 0.001
             calib_flag = getattr(self.tree_pad, self.branch_names["calib_flag_pad"])
             integral50 = getattr(self.tree_pad, self.branch_names["integral_50_pad"])
@@ -547,6 +554,8 @@ class TimingAlignment:
 
             if is_correctly_matched:
                 self.out_branches["accepted"][0] = 1
+            else:
+                self.out_branches["accepted"][0] = 0
             if self.f_pixel:
                 hit_plane_bits = getattr(self.tree_pixel, self.branch_names["plane_bits_pixel"])
                 track_x = getattr(self.tree_pixel, self.branch_names["track_x"])
@@ -610,7 +619,8 @@ class TimingAlignment:
         self.histos['h'].GetYaxis().SetTitle("Events")
         self.histos['h'].Draw()
         c.Print("{0}/residual{1}.pdf".format(self.result_dir, self.appendix))
-
+        rms = self.histos['h'].GetRMS()
+        self.run_timing.timing_alignment_width = rms
         # print h2, c
         # Always also a fuller and a limited y-range time plot
         fun = ROOT.TF1("fun", "[0]+[1]*x")
