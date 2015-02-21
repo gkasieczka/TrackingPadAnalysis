@@ -234,11 +234,13 @@ class root_style(object) :
         if not fname.endswith('/'):
             fname+='/'
         fname += '%s/'+name+'.%s'
-        print 'saving canvas', fname
+        print 'saving canvas', fname,'c'
         ftypes = ['png','pdf','eps','root','tex']
+        print ftypes
         for f in ftypes:
             ensure_dir(fname%(f,f))
             fn = fname%(f,f)
-            print '\t%s'%(fn)
+            print '\t%s'%(fn),
             canvas.SaveAs(fn)
+            print ' done'
 
