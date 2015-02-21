@@ -62,7 +62,8 @@ class MaskInfo:
                  min_x=-2,  # [float]
                  max_x=-2,  # [float]
                  min_y=-2,  # [float]
-                 max_y=-2):  # [float]
+                 max_y=-2,
+                 areas=[]):  # [float]
 
         # Add to masks dictionary
         name = self.create_name(self.diamond,
@@ -77,6 +78,7 @@ class MaskInfo:
     #  to a file using json
     @classmethod
     def dump(cls, filename):
+        print 'save MaskInfo:',filename
         f = open(filename, "w")
         f.write(json.dumps(cls.masks,
                            default=lambda o: o.__dict__,
@@ -114,5 +116,5 @@ if __name__ == "__main__":
         MaskInfo.load(fname)
 
     # MaskInfo(1, "IIa-2", 2518, -1, 65, 79, 1, 50, 1, 50, 1, 50, -0.2, 0.2, 0., 0.4)
-    # MaskInfo.dump(fname)
+    MaskInfo.dump(fname)
     print MaskInfo.masks
