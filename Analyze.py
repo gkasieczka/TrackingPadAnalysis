@@ -32,7 +32,6 @@ def usage():
     print '    ./Analyze.py <runnumber>'
     return
 
-
 ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.WARNING)
 ROOT.RooMsgService.instance().getStream(1).removeTopic(ROOT.RooFit.Eval)
 ROOT.RooMsgService.instance().getStream(1).removeTopic(ROOT.RooFit.Minimization)
@@ -52,12 +51,10 @@ ROOT.gStyle.SetNumberContours(999)
 ROOT.gROOT.SetBatch()
 this_style.set_style(width, width, 1)
 
-
 def ensure_dir(f):
     d = os.path.dirname(f)
     if not os.path.exists(d):
         os.makedirs(d)
-
 
 def saveCanvas(c1, name,save_to_rootfile = True):
     #print 'Save Canvas:',name
@@ -67,19 +64,6 @@ def saveCanvas(c1, name,save_to_rootfile = True):
     this_style.save_canvas(c1, name[-1])
     if save_to_rootfile:
         c1.Write('', ROOT.TObject.kWriteDelete)
-
-
-# def saveCanvas(c1,name):
-#     #print 'Save Canvas:',name
-#     name = name.split('/')
-#     fdir = '/'.join(name[:-1])
-#     exts = ['pdf','eps','tex','root','png']
-#     #print '\t',name
-#     for ext in exts:
-#         fname= fdir+'/{ext}/{name}.{ext}'.format(ext=ext,name=name[-1])
-#         #print '\t',fname
-#         ensure_dir(fname)
-#         c1.SaveAs(fname)
 
 def getPedestalValue(hist):
     tmp_hist = copy.deepcopy(hist.ProjectionY())
@@ -117,57 +101,6 @@ def getPedestalValue(hist):
     pave.Draw()
     saveCanvas(c0, targetdir + '/' + 'pedestal_' + prefix)
     return central, sigma
-
-def make3D_area_plot(h_signal,h_entries,x_bins,y_bins):
-    c0 = this_style.get_canvas('3d_time_profile')
-    h_signal_cp = copy.deepcopy(h_signal)
-    h_entries_cp = copy.deepcopy(h_entries)
-    h_signal_cp.Rebin3D(h_signal_cp.GetNbinsX() / x_bins, h_signal_cp.GetNbinsY() / y_bins, 1)
-    h_entries_cp.Rebin3D(h_entries_cp.GetNbinsX() / x_bins, h_entries_cp.GetNbinsY() / y_bins, 1)
-    p_signal = h_signal.Project3D('yx')
-    p_entries = h_entries.Project3D('yx')
-    p_signal.Divide(p_entries)
-    c0.SetRightMargin(.2)
-    c0.SetLeftMargin(.1)
-    p_signal.Draw('colz')
-    p_signal.GetXaxis().SetTitle('xpos / cm')
-    p_signal.GetYaxis().SetTitle('ypos / cm')
-    p_signal.GetZaxis().SetTitle('avrg signal / adc')
-    zmin = p_signal.GetBinContent(p_signal.GetMinimumBin())
-    zmax = p_signal.GetBinContent(p_signal.GetMaximumBin())
-    cuts = []
-    print 'Draw cuts'
-    for xbin in range(1, h_signal_cp.GetNbinsX() + 1):
-        for ybin in range(1, h_signal_cp.GetNbinsY() + 1):
-            xmin = h_signal_cp.GetXaxis().GetBinLowEdge(xbin)
-            xmax = h_signal_cp.GetXaxis().GetBinUpEdge(xbin)
-            ymin = h_signal_cp.GetYaxis().GetBinLowEdge(ybin)
-            ymax = h_signal_cp.GetYaxis().GetBinUpEdge(ybin)
-            cut = ROOT.TCutG('cut_%d_%d' % (xbin, ybin), 5)
-            cut.SetPoint(0, xmin, ymin)
-            cut.SetPoint(1, xmin, ymax)
-            cut.SetPoint(2, xmax, ymax)
-            cut.SetPoint(3, xmax, ymin)
-            cut.SetPoint(4, xmin, ymin)
-            cut.SetTitle('Pos %d %d' % (xbin, ybin))
-            cut.Draw('same')
-            pt = ROOT.TPaveText(xmin, ymin, xmax, ymax)
-            pt.SetBorderSize(0)
-            pt.AddText('Pos %d %d' % (xbin, ybin))
-            pt.SetFillColor(0)
-            pt.SetFillStyle(0)
-            pt.Draw()
-            cuts.append(pt)
-            cuts.append(cut)
-    pave = ah.addDiamondInfo(0.02, 0.02, 0.15, 0.11, my_run)
-    pave.Draw()
-    saveCanvas(c0, targetdir + '/' + '3d_time_areas_' + prefix)
-    if infile:
-        infile.ReOpen('UPDATE')
-        c2 = copy.deepcopy(c0)
-        infile.cd()
-        c2.Write("3d_time_areas", ROOT.TObject.kWriteDelete)
-    return [p_signal.GetBinContent(p_signal.GetMinimumBin()),p_signal.GetBinContent(p_signal.GetMaximumBin())]
 
 def get_single_projections(prof,initial_scaling = False):
     histos = []
@@ -357,10 +290,6 @@ def make_circled_time_plots(hSignal, hEntries,):
         saveCanvas(c1,targetdir + '/hSignalTime_circle_all_'+prefix)
     this_style.set_style(width+200,width,1)
     c1 = this_style.get_canvas('time_plots_circled')
-        # c2 = this_style.get_canvas('time_plots_circled2')
-    # h_signal2.GetXaxis().SetRange()
-
-    # h_signal2.GetYaxis().SetRange()
     signal = copy.deepcopy(h_signal2.Project3D('yx'))
     entries = copy.deepcopy(h_entries2.Project3D('yx'))
     signal.Divide(entries)
@@ -415,84 +344,6 @@ def make_circled_time_plots(hSignal, hEntries,):
     saveCanvas(c1,targetdir + '/'+'time_plots_circle_positions_'+prefix,False)
     this_style.set_style(width,width,1)
 
-
-
-def make3D_time_plot(h_signal, h_entries, x_bins, y_bins):
-    print 'make3D_time_plot'
-    [zmin,zmax] = make3D_area_plot(h_signal,h_entries,x_bins,y_bins)
-    maximum = zmax
-    c0 = this_style.get_canvas('3d_time_profile')
-    c1 = this_style.get_canvas('3d_time_profile_relative')
-    c0.cd()
-    h_signal_cp = copy.deepcopy(h_signal)
-    h_entries_cp = copy.deepcopy(h_entries)
-    h_signal_cp.Rebin3D(h_signal_cp.GetNbinsX() / x_bins, h_signal_cp.GetNbinsY() / y_bins, 1)
-    h_entries_cp.Rebin3D(h_entries_cp.GetNbinsX() / x_bins, h_entries_cp.GetNbinsY() / y_bins, 1)
-    delta = zmax - zmin
-    zmin = zmin - delta * .1
-    zmax = zmax + delta * .1
-
-    profs = []
-    profs_relative = []
-    entries = []
-    c0.Divide(1, y_bins)
-    c1.Divide(1, y_bins)
-    print int(h_signal_cp.GetEntries()), int(h_entries_cp.GetEntries())
-    print zmin, zmax
-    single_projections = []
-    single_projections_rel = []
-    for ybin in range(1, y_bins + 1):
-        c0.cd(ybin)
-        c0.cd(ybin).SetLeftMargin(.04)
-        c0.cd(ybin).SetTopMargin(.03)
-        c0.cd(ybin).SetBottomMargin(.00)
-        c0.cd(ybin).SetRightMargin(.1)
-        c0.cd(ybin)
-        prof,prof_rel,proj_entries = get_projection_plot(h_signal_cp,h_entries_cp,ybin,zmin,zmax,maximum)
-        # print prof.GetNbinsX(),prof.GetNbinsY(),
-        projections = get_single_projections(prof,False)
-        for p in projections:
-            signals = [p.GetBinContent(bin) for bin in range(1,p.GetNbinsX()+1)]
-            print p.GetName(),min(signals),max(signals)
-        single_projections.extend(projections)
-        create_stacks('3d_time_profiles%d_'%ybin,projections,ybin,y_bins)
-        projections_rel = get_single_projections(prof_rel,True)
-        single_projections_rel.extend(projections_rel)
-
-        create_stacks('3d_time_profiles%d_relative_'%ybin,projections_rel,ybin,y_bins)
-        entries.append(proj_entries)
-        profs.append(prof)
-        prof.Draw('colz')
-        proj_entries.Draw('sameTEXT')
-        c1.cd(ybin).SetLeftMargin(.04)
-        c1.cd(ybin).SetTopMargin(.03)
-        c1.cd(ybin).SetBottomMargin(.00)
-        c1.cd(ybin).SetRightMargin(.1)
-        c1.cd(ybin)
-        profs_relative.append(prof_rel)
-        prof_rel.Draw('colz')
-        proj_entries.Draw('sameTEXT')
-    c0.cd(y_bins + 1)
-    pave = ah.addDiamondInfo(0.02, 0.02, 0.15, 0.11, my_run)
-    pave.Draw()
-    saveCanvas(c0, targetdir + '/' + '3d_time_profile_' + prefix)
-    c1.cd(y_bins + 1)
-    pave2 =  ah.addDiamondInfo(0.02, 0.02, 0.15, 0.11, my_run)
-    pave2.Draw()
-    saveCanvas(c1, targetdir + '/' + '3d_time_profile_relative_' + prefix)
-
-    if infile:
-        infile.ReOpen('UPDATE')
-        c2 = copy.deepcopy(c0)
-        infile.cd()
-        c2.Write("3d_time_profile", ROOT.TObject.kWriteDelete)
-        c2 = copy.deepcopy(c1)
-        infile.cd()
-        c2.Write("3d_time_profile_relative", ROOT.TObject.kWriteDelete)
-    create_stacks('3d_time_profiles_',single_projections)
-    create_stacks('3d_time_profiles_relative',single_projections_rel)
-    print 'done'
-
 def makeTimePlots(h_time_2d, name='time_2d'):
     if name == 'time_2d':
         profileY = h_time_2d.ProfileY()
@@ -509,19 +360,10 @@ def makeTimePlots(h_time_2d, name='time_2d'):
         func.SetParameters(1, h_time_2d.GetMean(), h_time_2d.GetRMS())
 
         land = copy.deepcopy(h_time_2d.ProjectionY())
-        # land.Fit(func)
         fit_res = ah.fitLandauGaus(land, True)
         this_style.set_style(1200, 600, 1 / 2.)
         c0 = this_style.get_canvas('time_canvas')
-        # c0 = ROOT.TCanvas('time_canvas', 'Canvas of the time evolution', 1200, 600)
         c0.cd()
-        ### if neg_landau:
-        ###     land.GetXaxis().SetRangeUser(-250,0)
-        ### else:
-        ###     land.GetXaxis().SetRangeUser(0,250)
-        ### land.Draw()
-        ### c0.SaveAs(targetdir+'/'+prefix+'_landau.pdf')
-        #land.Draw()
         this_style.print_margins()
         fit_res[2].Draw()
         pave = ah.addDiamondInfo(0.02, 0.02, 0.15, 0.11, my_run)
@@ -616,24 +458,8 @@ def makeXYPlots(h_3d):
             if z_histo.Integral() < 100.:
                 continue
             counter += 1
-            # if counter > 3: continue
-            # print 'counter:', counter
-            #print 'at xbin %d and ybin %d' %(xbin, ybin)
-            #z_histo.Fit('landau','q')
             fit_res = ah.fitLandauGaus(z_histo)
-            ##### print 'this is the fit result from the ROOFIT fit:', fit_res[1]
-            ##### print ' printValue of the parameter list:', fit_res[1].find('ml')
-            ##### print ' mean  landau', fit_res[1].getRealValue('ml')
-            ##### print ' sigma landau', fit_res[1].getRealValue('sl')
 
-            ## get the mean and MPV of the landau for all the bins with non-zero integral
-            # mpv = z_histo.GetFunction('landau').GetParameter(1) #fit_res[1].GetParameter(1)
-
-            #mpv = fit_res[1].getRealValue('ml')
-            #sig = fit_res[1].getRealValue('sl')
-
-            #mpv = fit_res[1][1]
-            #sig = fit_res[1][2]
             mean = z_histo.GetMean()
             mpv = z_histo.GetXaxis().GetBinCenter(z_histo.GetMaximumBin())
             sig = z_histo.GetRMS()
@@ -692,24 +518,6 @@ def makeXYPlots(h_3d):
     c1.cd(2)
     h_2d_mean.Draw('colz')
     h_2d_mean.GetZaxis().SetRangeUser(new_range[0], new_range[1])
-
-
-
-    # h_2d_mean.GetZaxis().SetRangeUser(central-50., central+50.)
-    # c1.cd(3)
-    # ROOT.gPad.SetTicks(1,1)
-    # central = ah.mean(mpvs)
-    # #central = abs(mean)
-    # h_2d_mpv.SetTitle('XY distribution of MPV of PH')
-    # h_2d_mpv.Draw('colz')
-    # h_2d_mpv.GetZaxis().SetRangeUser(central-40., central+40.)
-    #
-    # c1.cd(4)
-    # ROOT.gPad.SetTicks(1,1)
-    # central = ah.mean(sigmas)
-    # h_2d_sigma.SetTitle('width of PH')
-    # h_2d_sigma.Draw('colz')
-    # h_2d_sigma.GetZaxis().SetRangeUser(0., central+10.)
 
     c1.cd(0)
     pave = my_run.addDiamondInfo(0.4, 0.45, 0.6, 0.55)
