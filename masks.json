@@ -19,7 +19,38 @@
         "min_y": 0.0
     }, 
     "2A87-E--1-DATA-0319": {
-        "areas": [], 
+        "areas": [
+            [
+                -0.075,
+                0.125,
+                0.02,
+                "high"
+            ],
+            [
+                0.03,
+                0.10,
+                0.02,
+                "high"
+            ],
+            [
+                -0.12,
+                0.22,
+                0.02,
+                "high"
+            ],
+            [
+                -0.015,
+                0.24,
+                0.02,
+                "low"
+            ],
+            [
+                -0.125,
+                0.05,
+                0.02,
+                "low"
+            ]
+        ],
         "bias_sign": -1, 
         "data_type": 0, 
         "diamond": "2A87-E", 
@@ -28,14 +59,14 @@
         "max_col_roc4": -1, 
         "max_row_roc0": -1, 
         "max_row_roc4": -1, 
-        "max_x": 0.4, 
-        "max_y": 0.4, 
+        "max_x": 0.15,
+        "max_y": 0.31,
         "min_col_roc0": -1, 
         "min_col_roc4": -1, 
         "min_row_roc0": -1, 
         "min_row_roc4": -1, 
-        "min_x": -0.4, 
-        "min_y": -0.4
+        "min_x": -0.22,
+        "min_y": -0.05
     }, 
     "2A87-E--1-PEDESTAL-0321": {
         "areas": [], 
@@ -57,7 +88,44 @@
         "min_y": -0.4
     }, 
     "2A87-E-1-DATA-0357": {
-        "areas": [], 
+        "areas": [
+             [
+                -0.125,
+                0.25,
+                0.015,
+                "high"
+            ],
+            [
+                0.025,
+                0.1,
+                0.015,
+                "high"
+            ],
+            [
+                0.025,
+                0.18,
+                0.015,
+                "high"
+            ],
+            [
+                -0.08,
+                0.12,
+                0.015,
+                "high"
+            ],
+            [
+                -0.025,
+                0.27,
+                0.015,
+                "low"
+            ],
+            [
+                0.075,
+                0.12,
+                0.015,
+                "low"
+            ]
+        ],
         "bias_sign": 1, 
         "data_type": 0, 
         "diamond": "2A87-E", 
@@ -66,14 +134,14 @@
         "max_col_roc4": -1, 
         "max_row_roc0": -1, 
         "max_row_roc4": -1, 
-        "max_x": 0.4, 
-        "max_y": 0.4, 
+        "max_x": 0.15,
+        "max_y": 0.35,
         "min_col_roc0": -1, 
         "min_col_roc4": -1, 
         "min_row_roc0": -1, 
         "min_row_roc4": -1, 
-        "min_x": -0.4, 
-        "min_y": -0.4
+        "min_x": -0.22,
+        "min_y": -0.05
     }, 
     "2A87-E-1-PEDESTAL-0358": {
         "areas": [], 
@@ -171,7 +239,38 @@
         "min_y": 0.0
     }, 
     "IIa-2--1-DATA-2518": {
-        "areas": [], 
+        "areas": [
+            [
+                0.02,
+                0.32,
+                0.015,
+                "high"
+            ],
+            [
+                -0.06,
+                0.22,
+                0.015,
+                "high"
+            ],
+            [
+                -0.14,
+                0.20,
+                0.015,
+                "high"
+            ],
+            [
+                -0.13,
+                0.30,
+                0.015,
+                "low"
+            ],
+            [
+                0.0,
+                0.15,
+                0.015,
+                "low"
+            ]
+        ],
         "bias_sign": -1, 
         "data_type": 0, 
         "diamond": "IIa-2", 
@@ -180,14 +279,14 @@
         "max_col_roc4": 50, 
         "max_row_roc0": 79, 
         "max_row_roc4": 50, 
-        "max_x": 0.2, 
-        "max_y": 0.4, 
+        "max_x": 0.16,
+        "max_y": 0.39,
         "min_col_roc0": 1, 
         "min_col_roc4": 1, 
         "min_row_roc0": 65, 
         "min_row_roc4": 1, 
-        "min_x": -0.2, 
-        "min_y": 0.0
+        "min_x": -0.18,
+        "min_y": 0.05
     }, 
     "IIa-2--1-PEDESTAL-2518": {
         "areas": [], 
@@ -209,7 +308,38 @@
         "min_y": 0.0
     }, 
     "IIa-2-1-DATA-0513": {
-        "areas": [], 
+        "areas": [
+            [
+                0.1, 
+                0.07, 
+                0.015, 
+                "high"
+            ], 
+            [
+                0.08, 
+                0.3, 
+                0.015, 
+                "high"
+            ], 
+            [
+                -0.07, 
+                0.22, 
+                0.015, 
+                "high"
+            ], 
+            [
+                -0.15, 
+                0.15, 
+                0.015, 
+                "high"
+            ], 
+            [
+                -0.025, 
+                0.31, 
+                0.025, 
+                "low"
+            ]
+        ], 
         "bias_sign": 1, 
         "data_type": 0, 
         "diamond": "IIa-2", 
@@ -218,14 +348,14 @@
         "max_col_roc4": 50, 
         "max_row_roc0": 79, 
         "max_row_roc4": 50, 
-        "max_x": 0.2, 
-        "max_y": 0.4, 
+        "max_x": 0.15, 
+        "max_y": 0.36, 
         "min_col_roc0": 1, 
         "min_col_roc4": 1, 
         "min_row_roc0": 65, 
         "min_row_roc4": 1, 
         "min_x": -0.2, 
-        "min_y": 0.0
+        "min_y": 0.02
     }, 
     "IIa-2-1-PEDESTAL-0519": {
         "areas": [], 
@@ -305,6 +435,12 @@
                 "high"
             ], 
             [
+                -0.06, 
+                0.26, 
+                0.015, 
+                "high"
+            ], 
+            [
                 -0.12, 
                 0.25, 
                 0.025, 
@@ -348,7 +484,32 @@
         "min_y": 0.0
     }, 
     "IIa-3-1-DATA-2042": {
-        "areas": [], 
+        "areas": [
+            [
+                -0.15, 
+                0.2, 
+                0.015, 
+                "high"
+            ], 
+            [
+                0.01, 
+                0.15, 
+                0.015, 
+                "high"
+            ], 
+            [
+                0.05, 
+                0.25, 
+                0.015, 
+                "high"
+            ], 
+            [
+                -0.1, 
+                0.05, 
+                0.015, 
+                "low"
+            ]
+        ], 
         "bias_sign": 1, 
         "data_type": 0, 
         "diamond": "IIa-3", 
@@ -357,14 +518,14 @@
         "max_col_roc4": 35, 
         "max_row_roc0": 61, 
         "max_row_roc4": 29, 
-        "max_x": 0.2, 
-        "max_y": 0.4, 
+        "max_x": 0.13, 
+        "max_y": 0.32, 
         "min_col_roc0": 20, 
         "min_col_roc4": 15, 
         "min_row_roc0": 31, 
         "min_row_roc4": 59, 
-        "min_x": -0.2, 
-        "min_y": 0.0
+        "min_x": -0.25,
+        "min_y": -0.25
     }, 
     "IIa-3-1-PEDESTAL-0323": {
         "areas": [], 
