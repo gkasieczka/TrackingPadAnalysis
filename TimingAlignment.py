@@ -32,7 +32,7 @@ parser.add_argument('action', metavar='A', type=int,
                     help='action: 0=analyze    1=run on small sample     2=find alignment    3=do everything')
 parser.add_argument('-diamond', type=str, help='only needed for action=3')
 parser.add_argument('-voltage', type=int, help='only needed for action=3')
-parser.add_argument('--output-dir', '-o', dest='output', help='output directory', default='./results/')
+parser.add_argument('--output-dir', '-o', dest='output', help='output directory', default='./results/runs/')
 args = parser.parse_args()
 
 run = args.run
