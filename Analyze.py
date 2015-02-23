@@ -257,6 +257,7 @@ def make_circled_time_plots(hSignal, hEntries,):
             signal.SetMarkerColor(color)
             signal.SetMarkerSize(2)
             signal.SetMarkerStyle(20+index)
+            signal.GetYaxis().SetRangeUser(50., 320.)
             c1.cd()
             signal_histos.append(copy.deepcopy(signal))
             signal.Draw('E1')
@@ -282,7 +283,7 @@ def make_circled_time_plots(hSignal, hEntries,):
         stack.Draw('nostack')
         pave = ah.addDiamondInfo(0.01, 0.01, 0.15, 0.09, my_run)
         pave.Draw()
-        leg = this_style.make_legend(.5,.5,len(signal_histos))
+        leg = this_style.make_legend(.3,.25,len(signal_histos))
         for histo in signal_histos:
             leg.AddEntry(histo)
 
@@ -410,7 +411,6 @@ def makeTimePlots(h_time_2d, name='time_2d'):
     pave.Draw()
     saveCanvas(c0, targetdir + '/' + name + prefix)
     return arr
-
 
 def makeXYPlots(h_3d):
     if my_run.calibration_event_fraction < 0.5:
@@ -793,8 +793,8 @@ if __name__ == "__main__":
                 avrg_chn2 = ev.avrg_first_chn2
             except:
                 avrg_chn2 = 0
-            signal = factor * (ev.integral50 - pedestal)
-            signal_chn2 = factor * (ev.integral50 - pedestal - avrg_chn2)
+            signal = factor * (ev.integral50) - pedestal
+            signal_chn2 = factor * (ev.integral50  - avrg_chn2) - pedestal
             # print rel_time,signal
             # fill the 3D histogram
             if ev.accepted:
