@@ -108,6 +108,19 @@ if do_pedestal:
     for run in ped_not:
         cmd = 'python Analyze.py reload '+str(run)
         commands.append((run,cmd))
+pool = Pool(nProcesses)
+it = pool.imap_unordered(partial(call, shell=True), [c[1] for c in commands])
+failures = []
+complete = []
+for i, returncode in enumerate(it):
+    # print multiprocessing.active_children()
+    if returncode != 0:
+        print("Command '%s'  failed: %d" % (commands[i], returncode))
+        failures.append(commands[i][0])
+    else:
+        complete.append(commands[i][0])
+        print("Command '%s'  completed: %d" % (commands[i], returncode))
+
 if do_data:
     dat_fail_no_timing = []
     dat_fail_no_pedestal = []
@@ -172,10 +185,6 @@ if do_bias:
         commands.append((run,cmd))
 
 #raw_input('start analysis with %d commands. press enter'%len(commands))
-pool = Pool(nProcesses)
-it = pool.imap_unordered(partial(call, shell=True), [c[1] for c in commands])
-failures = []
-complete = []
 for i, returncode in enumerate(it):
     # print multiprocessing.active_children()
     if returncode != 0:
