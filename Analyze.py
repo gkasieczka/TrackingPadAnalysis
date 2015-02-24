@@ -262,18 +262,33 @@ def make_circled_time_plots(hSignal, hEntries,):
             c1.cd()
             signal_histos.append(copy.deepcopy(signal))
             signal.Draw('E1')
-            signal.Fit('pol1','q')
+            fit = ROOT.TF1('fit_%s'%descr,'pol0')
+            minx = signal.GetXaxis().GetBinCenter(2)
+            maxx = signal.GetXaxis().GetBinCenter(signal.GetNbinsX()-1)
+            signal.Fit(fit,'Wq','',minx,maxx)
             # entries.Draw('TEXTsame')
             pave = ah.addDiamondInfo(0.01, 0.01, 0.15, 0.09, my_run)
             pave.Draw()
             n_entries = [entries.GetBinContent(b) for b in range(1,entries.GetNbinsX()+1)]
             n_entries = filter(lambda x:x>0,n_entries)
             mean_events,sigma = ah.get_mean_and_sigma(n_entries)
-            y_pos = .15
-            pt = ROOT.TPaveText(.5,y_pos,.5,y_pos,'NDC NB')
             text = 'avrg. entries: %4d +/- %2d'%(mean_events,sigma)
+            y_pos = .2
+            pt = ROOT.TPaveText(.5,y_pos,.5,y_pos,'NDC NB')
+            values = [signal_histos[-1].GetBinContent(b) for b in range(1,entries.GetNbinsX()+1)]
+            print values
+            values = values[1:-1]
+            mean = reduce(lambda x, y: x+y,values)/len(values)
+            values2=map(lambda x: x**2, values)
+            mean2 = reduce(lambda x, y: x+y,values2)/len(values)
+            sigma = math.sqrt(mean2-mean**2)
             pt.AddText(text)
-            pt.SetTextSize(0.04)
+            text = 'mean: %.2f +/- %.3f'%(mean,sigma)#(fit.GetParameter(0),fit.GetParError(0))
+            print text
+            print 'calc. mean: %.2f +/- %.3f'%(mean,sigma)
+            signal_histos[-1].SetTitle('%s: %.2f +/- %.3f'%(descr,mean,sigma))#fit.GetParameter(0),fit.GetParError(0)))
+            pt.AddText(text)
+            pt.SetTextSize(0.03)
             pt.Draw()
             #hSignalTime_%s
             saveCanvas(c1,targetdir + '/hSignalTime_circle_%d_%s'%(index,circle[3])+ '_'+prefix)
@@ -284,7 +299,7 @@ def make_circled_time_plots(hSignal, hEntries,):
         stack.Draw('nostack')
         pave = ah.addDiamondInfo(0.01, 0.01, 0.15, 0.09, my_run)
         pave.Draw()
-        leg = this_style.make_legend(.3,.25,len(signal_histos))
+        leg = this_style.make_legend(.3,.45,len(signal_histos))
         for histo in signal_histos:
             leg.AddEntry(histo)
 
@@ -310,7 +325,8 @@ def make_circled_time_plots(hSignal, hEntries,):
         zmax = max(ranges[key][1],zmax)
         print "Found Range: ",ranges[key]
     if zmin < zmax:
-        signal.GetZaxis().SetRangeUser(zmin,zmax)
+        ##signal.GetZaxis().SetRangeUser(zmin,zmax)
+        signal.GetZaxis().SetRangeUser(110,305)
     ranges[key] = [zmin,zmax]
     pickle.dump(ranges, open(fname, "wb"))
 
@@ -326,7 +342,10 @@ def make_circled_time_plots(hSignal, hEntries,):
             color = ROOT.kBlue
         else:
             color = ROOT.kPink
-        circ = ROOT.TEllipse(x,y,r,r)
+        if 'square' in circle[3]:
+            circ = ROOT.TBox(x-r/2,y-r/2,x+r/2,y+r/2)
+        else:
+            circ = ROOT.TEllipse(x,y,r,r)
         drawn_circles.append(copy.deepcopy(circ))
         drawn_circles[-1].SetLineColor(color)
         drawn_circles[-1].SetLineWidth(2)
@@ -635,10 +654,12 @@ if __name__ == "__main__":
     h_raw = None
     h_raw_factor = None
     h_pedestal = None
+    h_signal = None
     print '%20s' % 'h_3dfull', infile.Get('h_3dfull') != None
     print '%20s' % 'h_time_2d', infile.Get('h_time_2d') != None
     print '%20s' % 'h_time_3d_signal', infile.Get('h_time_3d_signal') != None
     print '%20s' % 'h_time_3d_entries', infile.Get('h_time_3d_entries') != None
+    print '%20s' % 'h_signal', infile.Get('h_signal') != None
     loaded  = True
 
     runPedestal = (my_run.data_type == 1)
@@ -652,13 +673,15 @@ if __name__ == "__main__":
                     infile.Get('h_time_3d_signal') != None and \
                     infile.Get('h_time_3d_entries') != None and \
                     infile.Get('h_raw') != None and \
-                    infile.Get('h_raw_factor') != None:
+                    infile.Get('h_raw_factor') != None and \
+                    infile.Get('h_signal') != None:
         h_3d = copy.deepcopy(infile.Get('h_3dfull'))
         h_time_2d = copy.deepcopy(infile.Get('h_time_2d'))
         h_time_3d_signal = copy.deepcopy(infile.Get('h_time_3d_signal'))
         h_time_3d_entries = copy.deepcopy(infile.Get('h_time_3d_entries'))
         h_raw = copy.deepcopy(infile.Get('h_raw'))
         h_raw_factor = copy.deepcopy(infile.Get('h_raw_factor'))
+        h_signal = copy.deepcopy(infile.Get('h_signal'))
         loaded = True
         print 'file already loaded'
     else:
@@ -740,17 +763,23 @@ if __name__ == "__main__":
             h_raw.Delete()
         h_raw = ROOT.TH1F('h_raw','h_raw',1000, -500, 500.)
         h_raw.GetXaxis().SetTitle('Signal_{raw} / ADC')
-        h_raw.GetYaxis().SetTitle('number fo entries')
+        h_raw.GetYaxis().SetTitle('number of entries')
         if h_raw_factor:
             h_raw_factor.Delete()
         h_raw_factor = ROOT.TH1F('h_raw_factor','h_raw_factor: {0:+3.1f}'.format(factor),1000, -500, 500.)
         h_raw_factor.GetXaxis().SetTitle('Signal_{raw,factored} / ADC')
-        h_raw_factor.GetYaxis().SetTitle('number fo entries')
+        h_raw_factor.GetYaxis().SetTitle('number of entries')
 
         if runPedestal:
             h_pedestal = ROOT.TH1F('h_pedestal','h_Pedestal',1000, -500, 500.)
             h_pedestal.GetXaxis().SetTitle('Pedestal / ADC')
-            h_pedestal.GetYaxis().SetTitle('number fo entries')
+            h_pedestal.GetYaxis().SetTitle('number of entries')
+
+        if h_signal:
+            h_signal.Delete()
+        h_signal = ROOT.TH1F('h_signal','h_signal: {0:+6.1f}'.format(pedestal),1000, -500, 500.)
+        h_signal.GetXaxis().SetTitle('signal / ADC')
+        h_signal.GetYaxis().SetTitle('number of entries')
 
         if h_time_2d:
             h_time_2d.Delete()
@@ -842,6 +871,7 @@ if __name__ == "__main__":
             # fill all the time histograms with the integral
             h_raw.Fill(ev.integral50)
             h_raw_factor.Fill(factor*ev.integral50)
+            h_signal.Fill(signal)
             h_time_2d.Fill(rel_time, signal)
             h_time_2d_chn2offset.Fill(rel_time, signal_chn2)
             if runPedestal:
@@ -855,6 +885,7 @@ if __name__ == "__main__":
         h_raw.Write('', ROOT.TObject.kWriteDelete)
         h_raw_factor.Write('', ROOT.TObject.kWriteDelete)
         h_3d.Write('', ROOT.TObject.kWriteDelete)
+        h_signal.Write('', ROOT.TObject.kWriteDelete)
         h_time_2d.Write('', ROOT.TObject.kWriteDelete)
         h_time_3d_signal.Write('', ROOT.TObject.kWriteDelete)
         h_time_3d_entries.Write('', ROOT.TObject.kWriteDelete)
