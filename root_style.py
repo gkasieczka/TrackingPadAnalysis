@@ -30,12 +30,13 @@ class root_style(object) :
         )
 
     def make_legend(self,X1,Y2, nentries):
-        width = 0.3
+        width = 0.4
         X2 = X1 + width
-        Y1 = Y2 - nentries *.25 * width
+        Y1 = Y2 - nentries *.05 * width
         # raw_input('nentries: %s'%nentries)
         l = ROOT.TLegend(X1,Y1,X2,Y2)
         l.SetLineWidth(2)
+        l.SetNColumns(2)
         l.SetBorderSize(0)
         l.SetFillColor(0)
         l.SetFillStyle(0)
