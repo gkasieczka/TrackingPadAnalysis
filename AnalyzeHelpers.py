@@ -221,16 +221,22 @@ def fitLandauGaus(hist, full=False):
 
 
 def make_area_time_plot(h_signal, h_entries, xpos, ypos, radius, descr=''):
-    if descr != '':
-        name = 'hSignalTime_%s_x%03d_y%03d_r%03d' % (descr, xpos * 100, ypos * 100, radius * 100)
+    if 'square' in descr.lower():
+        do_circle = False
+        typ = 'square'
     else:
-        name = 'hSignalTime_x%03d_y%03d_r%03d' % (xpos * 100, ypos * 100, radius * 100)
-    title = 'Signal vs. Time: %4.1d/%4.1f, r = %2.1f' % (xpos, ypos, radius)
+        do_circle = True
+        typ = 'circle'
+    if descr != '':
+        name = 'hSignalTime_%s_%s_x%03d_y%03d_r%03d' % (typ,descr, xpos * 100, ypos * 100, radius * 100)
+    else:
+        name = 'hSignalTime_%s_x%03d_y%03d_r%03d' % (typ,xpos * 100, ypos * 100, radius * 100)
+    title = 'Signal vs. Time: %s %4.1d/%4.1f, r = %2.1f' % (typ,xpos, ypos, radius)
     bins = h_signal.GetNbinsZ()
     zmin = h_signal.GetZaxis().GetXmin()
     zmax = h_signal.GetZaxis().GetXmax()
     signal = ROOT.TH1F(name, title, bins, zmin, zmax)
-    name = 'hSignalEntriesTime_x%03d_y%03d_r%03d' % (xpos * 100, ypos * 100, radius * 100)
+    name = 'hSignalEntriesTime_%s_x%03d_y%03d_r%03d' % (typ,xpos * 100, ypos * 100, radius * 100)
     entries = ROOT.TH1F(name, title, bins, zmin, zmax)
     for xbin in range(1, h_signal.GetNbinsX() + 1):
         for ybin in range(1, h_signal.GetNbinsY() + 1):
@@ -240,8 +246,12 @@ def make_area_time_plot(h_signal, h_entries, xpos, ypos, radius, descr=''):
             xx = x - xpos
             yy = y - ypos
             # print '%2.4f/%2.4f %2.4f/%2.4f %2.4f/%2.4f %2.4f %2.4f => %d'%(x,y,xpos,ypos,xx,yy,(xx)**2+(yy)**2,radius**2,(xx)**2+(yy)**2 > radius**2)
-            if (xx) ** 2 + (yy) ** 2 > radius ** 2:
-                continue
+            if do_circle:
+                if (xx) ** 2 + (yy) ** 2 > radius ** 2:
+                    continue
+            else:
+                if abs(xx) > radius/2 or abs(yy) > radius /2:
+                    continue
             h_signal.GetXaxis().SetRange(xbin, xbin)
             h_signal.GetYaxis().SetRange(ybin, ybin)
             h_entries.GetXaxis().SetRange(xbin, xbin)
