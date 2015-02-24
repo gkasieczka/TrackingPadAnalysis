@@ -183,7 +183,7 @@ if do_bias:
             cmd += 'reload '
         cmd += str(run)
         commands.append((run,cmd))
-
+it = pool.imap_unordered(partial(call, shell=True), [c[1] for c in commands])
 #raw_input('start analysis with %d commands. press enter'%len(commands))
 for i, returncode in enumerate(it):
     # print multiprocessing.active_children()
