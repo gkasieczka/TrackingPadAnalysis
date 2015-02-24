@@ -163,7 +163,31 @@
         "min_y": -0.4
     }, 
     "IIa-1--1-DATA-0033": {
-        "areas": [], 
+        "areas": [
+            [
+                -0.075,
+                0.125,
+                0.02,
+                "high"
+            ],
+            [
+                0.03,
+                0.10,
+                0.02,
+                "high"
+            ],
+            [
+                -0.12,
+                0.22,
+                0.02,
+                "high"
+            ],
+            [
+                -0.015,
+                0.24,
+                0.02,
+                "high"
+            ]        ],
         "bias_sign": -1, 
         "data_type": 0, 
         "diamond": "IIa-1", 
@@ -201,7 +225,31 @@
         "min_y": 0.0
     }, 
     "IIa-1-1-DATA-0033": {
-        "areas": [], 
+        "areas": [
+            [
+                -0.075,
+                0.125,
+                0.02,
+                "high"
+            ],
+            [
+                0.03,
+                0.10,
+                0.02,
+                "high"
+            ],
+            [
+                -0.12,
+                0.22,
+                0.02,
+                "high"
+            ],
+            [
+                -0.015,
+                0.24,
+                0.02,
+                "high"
+            ]        ],
         "bias_sign": 1, 
         "data_type": 0, 
         "diamond": "IIa-1", 
@@ -697,7 +745,45 @@
         "min_row_roc4": -1, 
         "min_x": -0.4, 
         "min_y": -0.4
-    }, 
+    },
+    "S129-1-DATA-1724": {
+        "areas": [],
+        "bias_sign": 1,
+        "data_type": 0,
+        "diamond": "S129",
+        "mask_time": 1724,
+        "max_col_roc0": -1,
+        "max_col_roc4": -1,
+        "max_row_roc0": -1,
+        "max_row_roc4": -1,
+        "max_x": 0.4,
+        "max_y": 0.4,
+        "min_col_roc0": -1,
+        "min_col_roc4": -1,
+        "min_row_roc0": -1,
+        "min_row_roc4": -1,
+        "min_x": -0.4,
+        "min_y": -0.4
+    },
+    "S129--1-DATA-1706": {
+        "areas": [],
+        "bias_sign": -1,
+        "data_type": 0,
+        "diamond": "S129",
+        "mask_time": 1706,
+        "max_col_roc0": -1,
+        "max_col_roc4": -1,
+        "max_row_roc0": -1,
+        "max_row_roc4": -1,
+        "max_x": 0.4,
+        "max_y": 0.4,
+        "min_col_roc0": -1,
+        "min_col_roc4": -1,
+        "min_row_roc0": -1,
+        "min_row_roc4": -1,
+        "min_x": -0.4,
+        "min_y": -0.4
+    },
     "S129--1-DATA-1724": {
         "areas": [], 
         "bias_sign": -1, 
@@ -735,7 +821,26 @@
         "min_row_roc4": -1, 
         "min_x": -0.4, 
         "min_y": -0.4
-    }, 
+    },
+    "S129--1-PEDESTAL-0922": {
+        "areas": [],
+        "bias_sign": -1,
+        "data_type": 1,
+        "diamond": "S129",
+        "mask_time": 922,
+        "max_col_roc0": -1,
+        "max_col_roc4": -1,
+        "max_row_roc0": -1,
+        "max_row_roc4": -1,
+        "max_x": 0.4,
+        "max_y": 0.4,
+        "min_col_roc0": -1,
+        "min_col_roc4": -1,
+        "min_row_roc0": -1,
+        "min_row_roc4": -1,
+        "min_x": -0.4,
+        "min_y": -0.4
+    },
     "S129--1-PEDESTAL-1252": {
         "areas": [], 
         "bias_sign": -1, 
