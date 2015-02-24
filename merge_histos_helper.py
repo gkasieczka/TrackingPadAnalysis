@@ -1,3 +1,4 @@
+import datetime
 import ROOT
 import warnings
 import RunInfo
@@ -6,6 +7,7 @@ import math
 from os import walk
 import copy
 import ConfigParser
+import time
 
 def get_voltage_string(bias):
     if bias <0:
@@ -104,7 +106,15 @@ def get_histos(fdir):
 
         run = int(fname[0])
         print '\t\trun',run
+        print '\t\tfname',fname
+        statbuf = os.stat(f_new)
+        delta_time = time.time()-statbuf.st_mtime
+        print "\t\tdelta time:",delta_time
+        print "\t\tlast change:",datetime.datetime.fromtimestamp(statbuf.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+        if delta_time > (24*3600):
+            raw_input('key press')
         root_file  = ROOT.TFile.Open(f_new)
+
         if not root_file:
             print 'CANNOT FIND ROOT FILE!!!!',f,f_new
             continue
@@ -340,7 +350,7 @@ def create_graph(dia_name,my_style,xx,mmps,mmeans,ppedestals,bias,rate = 0,draw_
     else:
         n = 2
     if not is_bias_scan:
-        leg = my_style.make_legend(.4,.65,n)
+        leg = my_style.make_legend(.4,.55,n)
     else:
 
         if min(x) < 0:
@@ -428,7 +438,7 @@ def create_graph(dia_name,my_style,xx,mmps,mmeans,ppedestals,bias,rate = 0,draw_
 def get_pedestal_histo(directory,this_run):
     print 'get_pedestal_histo',
     print directory,this_run
-    input_dir = directory+'/../pedestal/root/'
+    input_dir = directory+'/../../pedestal/root/'
     print input_dir
     input_dir = os.path.abspath(input_dir)
     print input_dir
@@ -456,11 +466,15 @@ def get_pedestal_histo(directory,this_run):
     print canvas,list(canvas.GetListOfPrimitives())
     for key in canvas.GetListOfPrimitives():
         prim  = canvas.GetPrimitive(key.GetName())
-        if 'h_time_2d_py' == key.GetName():
+        if 'h_time_2d_py' == key.GetName() or 'h_raw_factor' == key.GetName():
             print 'added',key, prim.GetName()
             histo  = copy.deepcopy(prim.Clone())
     if not histo:
+        print root_file != None, canvas!=None, histo!=None
+        if canvas:
+            print [key.GetName() for key in canvas.GetListOfPrimitives()]
         warnings.warn('cannot find canvas in %s'%f)
+        raw_input('Press key')
     return histo
 
 def create_pedestal_histos(my_style,all_histos,raw_bias,raw_rates,run_infos):

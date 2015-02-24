@@ -156,10 +156,12 @@ def create_histos(keys, is_bias_scan,is_rate_scan, bias):
                     bias = -0.0
                 raw_bias.append(bias)
                 v_bias.extend([bias+math.copysign(3, bias)*i for i in range(len(mpp))])
-            pedestals.extend([this_run.pedestal-this_run.pedestal]*len(mpp)) ## subtracting the pedestal from the pedestal
+            # pedestals.extend([this_run.pedestal-this_run.pedestal]*len(mpp)) ## subtracting the pedestal from the pedestal
+            # e_pedestals.extend([this_run.pedestal_sigma]*len(mpp))
+            # marcs cheap hack to please harris
+            pedestals.extend([this_run.pedestal]*len(mpp))
+            # marcs cheap hack to please harris
             e_pedestals.extend([this_run.pedestal_sigma]*len(mpp))
-            ## marcs cheap hack to please harris pedestals.extend([this_run.pedestal]*len(mpp))
-            ## marcs cheap hack to please harris e_pedestals.extend([this_run.pedestal_sigma]*len(mpp))
             print len(mps),len(rates),len(means)
 
     if is_bias_scan:
@@ -194,8 +196,9 @@ def create_histos(keys, is_bias_scan,is_rate_scan, bias):
     my_style.set_style(width,width,.9)
     is_IIa_diamond = ('IIa-' in this_run.diamond)
     e_vbias = [0]*len(rates)
+    draw_mp = False #not is_IIa_diamond
     if is_rate_scan:
-        create_graph(this_run.diamond,my_style,[rates,e_rates],[mps,e_mps],[means,e_means],[pedestals,e_pedestals],bias,draw_mp=not is_IIa_diamond)
+        create_graph(this_run.diamond,my_style,[rates,e_rates],[mps,e_mps],[means,e_means],[pedestals,e_pedestals],bias,draw_mp=draw_mp)
     else:
         print sign
         if sign == 'all':
@@ -204,7 +207,7 @@ def create_histos(keys, is_bias_scan,is_rate_scan, bias):
             print 'all means:',len(raw_bias),len(last_means)
             print map(lambda x,y: (x,y),raw_bias,last_means)
             draw_voltage_scan(my_style,raw_bias,last_means,raw_rates[-1])
-        create_graph(this_run.diamond,my_style,[v_bias,e_vbias],[mps,e_mps],[means,e_means],[pedestals,e_pedestals],0,raw_rates[-1],draw_mp=not is_IIa_diamond)
+        create_graph(this_run.diamond,my_style,[v_bias,e_vbias],[mps,e_mps],[means,e_means],[pedestals,e_pedestals],0,raw_rates[-1],draw_mp=draw_mp)
 
     create_pedestal_histos(my_style,all_histos,raw_bias,raw_rates,run_infos)
 
