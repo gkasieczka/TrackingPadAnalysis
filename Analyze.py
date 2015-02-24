@@ -66,7 +66,8 @@ def saveCanvas(c1, name,save_to_rootfile = True):
         c1.Write('', ROOT.TObject.kWriteDelete)
 
 def getPedestalValue(hist):
-    tmp_hist = copy.deepcopy(hist.ProjectionY())
+    # tmp_hist = copy.deepcopy(hist.ProjectionY())
+    tmp_hist = copy.deepcopy(hist)
     tmp_hist.SetBinContent(0, 0)
     tmp_hist.SetBinContent(1, 0)
     tmp_hist.SetBinContent(tmp_hist.GetNbinsX(), 0)
@@ -631,21 +632,39 @@ if __name__ == "__main__":
     h_time_2d = None
     h_time_3d_signal = None
     h_time_3d_entries = None
+    h_raw = None
+    h_raw_factor = None
+    h_pedestal = None
     print '%20s' % 'h_3dfull', infile.Get('h_3dfull') != None
     print '%20s' % 'h_time_2d', infile.Get('h_time_2d') != None
     print '%20s' % 'h_time_3d_signal', infile.Get('h_time_3d_signal') != None
     print '%20s' % 'h_time_3d_entries', infile.Get('h_time_3d_entries') != None
+    loaded  = True
 
-    if infile.Get('h_3dfull') != None and \
+    runPedestal = (my_run.data_type == 1)
+    if runPedestal:
+        if infile.Get('h_pedestal')!= None:
+            h_pedestal = infile.Get('h_pedestal')
+        else:
+            loaded = False
+    if loaded and infile.Get('h_3dfull') != None and \
                     infile.Get('h_time_2d') != None and \
                     infile.Get('h_time_3d_signal') != None and \
-                    infile.Get('h_time_3d_entries') != None:
+                    infile.Get('h_time_3d_entries') != None and \
+                    infile.Get('h_raw') != None and \
+                    infile.Get('h_raw_factor') != None:
         h_3d = copy.deepcopy(infile.Get('h_3dfull'))
         h_time_2d = copy.deepcopy(infile.Get('h_time_2d'))
         h_time_3d_signal = copy.deepcopy(infile.Get('h_time_3d_signal'))
         h_time_3d_entries = copy.deepcopy(infile.Get('h_time_3d_entries'))
+        h_raw = copy.deepcopy(infile.Get('h_raw'))
+        h_raw_factor = copy.deepcopy(infile.Get('h_raw_factor'))
         loaded = True
         print 'file already loaded'
+    else:
+        loaded = False
+
+
     # if the histograms aren't yet there, fill them. or do it if the user chooses to do so
     ###############################
     if reloadAnyway:
@@ -670,16 +689,15 @@ if __name__ == "__main__":
                                     250, -500.00, 500.00)
 
         ## runPedestal = math.isnan(my_run.pedestal) and (my_run.pedestal_run == -1 or my_run.number == my_run.pedestal_run)
-        runPedestal = (my_run.data_type == 1)
 
         print 'is nan?', math.isnan(my_run.pedestal)
         if math.isnan(my_run.pedestal) and (my_run.pedestal_run != -1 and my_run.number != my_run.pedestal_run):
             print 'analyze the pedestal run first!! it\'s run', my_run.pedestal_run
             sys.exit()
-        if runPedestal:
-            pedestal = 0.
-        else:
-            pedestal = my_run.pedestal
+        # if runPedestal:
+        #     pedestal = 0.
+        # else:
+        pedestal = my_run.pedestal
 
         ########################################
         # get the times of first and last events
@@ -712,9 +730,31 @@ if __name__ == "__main__":
             print 'run of %.2f minutes length' % (mins)
         mins = length / time_binning
 
+
+        if my_run.bias_voltage >= 0:
+            factor = -1.0
+        else:
+            factor = 1.0
+
+        if h_raw:
+            h_raw.Delete()
+        h_raw = ROOT.TH1F('h_raw','h_raw',1000, -500, 500.)
+        h_raw.GetXaxis().SetTitle('Signal_{raw} / ADC')
+        h_raw.GetYaxis().SetTitle('number fo entries')
+        if h_raw_factor:
+            h_raw_factor.Delete()
+        h_raw_factor = ROOT.TH1F('h_raw_factor','h_raw_factor: {0:+3.1f}'.format(factor),1000, -500, 500.)
+        h_raw_factor.GetXaxis().SetTitle('Signal_{raw,factored} / ADC')
+        h_raw_factor.GetYaxis().SetTitle('number fo entries')
+
+        if runPedestal:
+            h_pedestal = ROOT.TH1F('h_pedestal','h_Pedestal',1000, -500, 500.)
+            h_pedestal.GetXaxis().SetTitle('Pedestal / ADC')
+            h_pedestal.GetYaxis().SetTitle('number fo entries')
+
         if h_time_2d:
             h_time_2d.Delete()
-        h_time_2d = ROOT.TH2F('h_time_2d', 'h_time_2d', int(mins + 1), 0., int(mins + 1), 1000, -500, 500.)
+        h_time_2d = ROOT.TH2F('h_time_2d', 'h_time_2d: {0:+6.1f}'.format(pedestal), int(mins + 1), 0., int(mins + 1), 1000, -500, 500.)
         h_time_2d.GetYaxis().SetTitle('Signal / adc')
         h_time_2d.GetXaxis().SetTitle('Time')
         h_time_2d_chn2offset = ROOT.TH2F('h_time_2d_chn2offset', 'h_time_2d_chn2offset', int(mins + 1), 0.,
@@ -722,7 +762,7 @@ if __name__ == "__main__":
         if h_time_3d_signal:
             h_time_3d_signal.Delete()
         nbins = 48
-        h_time_3d_signal = ROOT.TH3D('h_time_3d_signal', 'time evaluated 2d distribution',
+        h_time_3d_signal = ROOT.TH3D('h_time_3d_signal', 'time evaluated 2d distribution:{0:+6.1f}'.format(pedestal),
                                      nbins, xmin, xmax,
                                      nbins, ymin, ymax,
                                      int(mins + 1), 0., int(mins + 1))
@@ -731,7 +771,7 @@ if __name__ == "__main__":
         h_time_3d_signal.GetZaxis().SetTitle('time / minutes')
         if h_time_3d_entries:
             h_time_3d_entries.Delete()
-        h_time_3d_entries = ROOT.TH3D('h_time_3d_entries', 'time evaluated 2d distribution',
+        h_time_3d_entries = ROOT.TH3D('h_time_3d_entries', 'time evaluated 2d distribution: {0:+6.1f}'.format(pedestal),
                                       nbins, xmin, xmax,
                                       nbins, ymin, ymax,
                                       int(mins + 1), 0., int(mins + 1))
@@ -739,14 +779,8 @@ if __name__ == "__main__":
         h_time_3d_entries.GetYaxis().SetTitle('ypos /cm')
         h_time_3d_entries.GetZaxis().SetTitle('time / minutes')
 
-        # print 'run of %.2f minutes length' %(mins)
-
         ###############################
         n_wrong_delay = 0
-        if my_run.bias_voltage >= 0:
-            factor = -1.0
-        else:
-            factor = 1.0
         ## fill the tree data in the histograms
         if progressbar_loaded:
             widgets = [progressbar.Bar('=', ' [', ']'), ' ', progressbar.Percentage()]
@@ -806,19 +840,26 @@ if __name__ == "__main__":
                 h_time_3d_entries.Fill(ev.track_x, ev.track_y, rel_time, 1)
 
             # fill all the time histograms with the integral
+            h_raw.Fill(ev.integral50)
+            h_raw_factor.Fill(factor*ev.integral50)
             h_time_2d.Fill(rel_time, signal)
             h_time_2d_chn2offset.Fill(rel_time, signal_chn2)
+            if runPedestal:
+                h_pedestal.Fill(factor * (ev.integral50))
         print
         # re-open file for writing
         infile.ReOpen('UPDATE')
         infile.cd()
         # print 'h_time_2d',h_time_2d.GetEntries(),
         # raw_input()
-
+        h_raw.Write('', ROOT.TObject.kWriteDelete)
+        h_raw_factor.Write('', ROOT.TObject.kWriteDelete)
         h_3d.Write('', ROOT.TObject.kWriteDelete)
         h_time_2d.Write('', ROOT.TObject.kWriteDelete)
         h_time_3d_signal.Write('', ROOT.TObject.kWriteDelete)
         h_time_3d_entries.Write('', ROOT.TObject.kWriteDelete)
+        if runPedestal:
+            h_pedestal.Write('', ROOT.TObject.kWriteDelete)
         loaded = True
 
     ROOT.gStyle.SetOptStat(11)
@@ -826,8 +867,8 @@ if __name__ == "__main__":
         print '------------------------------------'
         print '--- this is a pedestal run ---------'
         print '------------------------------------'
-        pedestal = getPedestalValue(h_time_2d)[0]
-        pedestal_sig = getPedestalValue(h_time_2d)[1]
+        pedestal = getPedestalValue(h_raw_factor)[0]
+        pedestal_sig = getPedestalValue(h_raw_factor)[1]
 
         RunInfo.load(parser.get('JSON', 'runs'))
         my_run = RunInfo.runs[my_rn]
