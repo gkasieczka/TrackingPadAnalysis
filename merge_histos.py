@@ -138,7 +138,6 @@ def create_histos(keys, is_bias_scan,is_rate_scan, bias):
         rs,m, mpp = divide_histo(histos[run][0],raw_rates,5)
         # h.Scale(1./float(maximum))
         if len(rs) > 0:
-
             mps.extend(mpp)
             means.extend(m)
             last_means.append(m[-1])
@@ -157,8 +156,10 @@ def create_histos(keys, is_bias_scan,is_rate_scan, bias):
                     bias = -0.0
                 raw_bias.append(bias)
                 v_bias.extend([bias+math.copysign(3, bias)*i for i in range(len(mpp))])
-            pedestals.extend([this_run.pedestal]*len(mpp))
+            pedestals.extend([this_run.pedestal-this_run.pedestal]*len(mpp)) ## subtracting the pedestal from the pedestal
             e_pedestals.extend([this_run.pedestal_sigma]*len(mpp))
+            ## marcs cheap hack to please harris pedestals.extend([this_run.pedestal]*len(mpp))
+            ## marcs cheap hack to please harris e_pedestals.extend([this_run.pedestal_sigma]*len(mpp))
             print len(mps),len(rates),len(means)
 
     if is_bias_scan:
