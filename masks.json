@@ -165,10 +165,10 @@
     "IIa-1--1-DATA-0033": {
         "areas": [
             [
-                -0.075,
-                0.125,
+                0.0,
+                0.2,
                 0.02,
-                "high"
+                "high_square"
             ],
             [
                 0.03,
@@ -196,14 +196,14 @@
         "max_col_roc4": 50, 
         "max_row_roc0": 79, 
         "max_row_roc4": 50, 
-        "max_x": 0.2, 
-        "max_y": 0.4, 
+        "max_x": 0.14,
+        "max_y": 0.33,
         "min_col_roc0": 1, 
         "min_col_roc4": 1, 
         "min_row_roc0": 65, 
         "min_row_roc4": 1, 
-        "min_x": -0.2, 
-        "min_y": 0.0
+        "min_x": -0.15,
+        "min_y": 0.08
     }, 
     "IIa-1--1-PEDESTAL-0729": {
         "areas": [], 
@@ -227,28 +227,28 @@
     "IIa-1-1-DATA-0033": {
         "areas": [
             [
-                -0.075,
-                0.125,
-                0.02,
-                "high"
+                -0.05,
+                0.25,
+                0.1,
+                "high_square"
             ],
             [
-                0.03,
-                0.10,
-                0.02,
-                "high"
+                0.05,
+                0.25,
+                0.1,
+                "high_square"
             ],
             [
-                -0.12,
-                0.22,
-                0.02,
-                "high"
+                -0.05,
+                0.15,
+                0.1,
+                "high_square"
             ],
             [
-                -0.015,
-                0.24,
-                0.02,
-                "high"
+                0.05,
+                0.15,
+                0.1,
+                "high_square"
             ]        ],
         "bias_sign": 1, 
         "data_type": 0, 
@@ -258,13 +258,13 @@
         "max_col_roc4": 50, 
         "max_row_roc0": 79, 
         "max_row_roc4": 50, 
-        "max_x": 0.2, 
-        "max_y": 0.4, 
+        "max_x": 0.2,
+        "max_y": 0.4,
         "min_col_roc0": 1, 
         "min_col_roc4": 1, 
         "min_row_roc0": 65, 
         "min_row_roc4": 1, 
-        "min_x": -0.2, 
+        "min_x": -0.2,
         "min_y": 0.0
     }, 
     "IIa-1-1-PEDESTAL-0729": {
